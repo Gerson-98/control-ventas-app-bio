@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Usuarios - Los Biónicos</title>
+
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-header__izquierda">
+        <img src="../icons/logo.png" alt="Los Biónicos" class="logo-imagen--header" />
+        <h1 class="app-header__titulo">Los Biónicos</h1>
+      </div>
+
+      <nav class="app-nav">
+        <a href="inicio.html">🏠 Inicio</a>
+        <a href="venta.html">🛒 Vender</a>
+        <a href="caja.html">💵 Caja</a>
+        <a href="productos.html">📦 Productos</a>
+        <a href="clientes.html">👤 Clientes</a>
+        <a href="reportes.html">📊 Reportes</a>
+        <a href="respaldo.html">☁️ Respaldo</a>
+        <a href="usuarios.html" class="activo">⚙️ Usuarios</a>
+      </nav>
+
+      <div class="app-header__derecha">
+        <span class="app-header__usuario" id="nombre-usuario-activo"></span>
+        <button class="boton-salir" id="boton-salir">Salir</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-main__header">
+        <h2>Usuarios del sistema</h2>
+        <button class="boton boton-primario boton-ancho-auto" id="boton-nuevo-usuario">
+          + Nuevo usuario
+        </button>
+      </div>
+
+      <div id="lista-usuarios" class="lista-tarjetas"></div>
+
+      <div id="estado-vacio" class="estado-vacio oculto">
+        <span class="icono">👤</span>
+        <p>Todavía no has agregado usuarios.<br />Toca "Nuevo usuario" para empezar.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal crear/editar usuario -->
+  <div class="fondo-modal oculto" id="fondo-modal">
+    <div class="tarjeta-modal">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-modal-x">✕</button>
+      <h3 id="titulo-modal">Nuevo usuario</h3>
+
+      <form id="form-usuario">
+        <input type="hidden" id="usuario-id" />
+
+        <div class="mensaje-error" id="error-usuario"></div>
+
+        <div class="campo">
+          <label for="usuario-nombre">Nombre</label>
+          <input type="text" id="usuario-nombre" required />
+        </div>
+
+        <div class="campo">
+          <label for="usuario-login">Usuario (login)</label>
+          <input type="text" id="usuario-login" required />
+        </div>
+
+        <div class="campo">
+          <label for="usuario-rol">Rol</label>
+          <select id="usuario-rol">
+            <option value="cajero">Cajero</option>
+            <option value="administrador">Administrador</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="usuario-password">Contraseña</label>
+          <input type="password" id="usuario-password" autocomplete="new-password" />
+        </div>
+
+        <div class="campo">
+          <label for="usuario-password-confirmar">Confirmar contraseña</label>
+          <input type="password" id="usuario-password-confirmar" autocomplete="new-password" />
+        </div>
+
+        <p class="nota-password oculto" id="nota-password">
+          Deja los campos de contraseña en blanco para no cambiarla.
+        </p>
+
+        <div class="campo campo-checkbox oculto" id="campo-activo">
+          <label for="usuario-activo">
+            <input type="checkbox" id="usuario-activo" checked />
+            Cuenta activa
+          </label>
+        </div>
+
+        <div class="modal-acciones">
+          <button type="button" class="boton boton-secundario" id="boton-cancelar-modal">Cancelar</button>
+          <button type="submit" class="boton boton-primario">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/sha256.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/usuarios.js"></script>
+  <script src="../js/registrar-sw.js"></script>
+</body>
+</html>

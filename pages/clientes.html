@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Clientes - Los Biónicos</title>
+
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-header__izquierda">
+        <img src="../icons/logo.png" alt="Los Biónicos" class="logo-imagen--header" />
+        <h1 class="app-header__titulo">Los Biónicos</h1>
+      </div>
+
+      <nav class="app-nav">
+        <a href="inicio.html">🏠 Inicio</a>
+        <a href="venta.html">🛒 Vender</a>
+        <a href="caja.html">💵 Caja</a>
+        <a href="productos.html">📦 Productos</a>
+        <a href="clientes.html" class="activo">👤 Clientes</a>
+        <a href="reportes.html">📊 Reportes</a>
+        <a href="respaldo.html" id="nav-respaldo">☁️ Respaldo</a>
+        <a href="usuarios.html" id="nav-usuarios">⚙️ Usuarios</a>
+      </nav>
+
+      <div class="app-header__derecha">
+        <span class="app-header__usuario" id="nombre-usuario-activo"></span>
+        <button class="boton-salir" id="boton-salir">Salir</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-main__header">
+        <h2>Clientes</h2>
+        <button class="boton boton-primario boton-ancho-auto" id="boton-nuevo-cliente">
+          + Nuevo cliente
+        </button>
+      </div>
+
+      <input
+        type="search"
+        id="buscador-clientes"
+        class="buscador-productos"
+        placeholder="Buscar cliente por nombre..."
+      />
+
+      <div id="lista-clientes" class="lista-tarjetas"></div>
+
+      <div id="estado-vacio" class="estado-vacio oculto">
+        <span class="icono">👤</span>
+        <p id="estado-vacio-texto">Todavía no has agregado clientes.<br />Toca "Nuevo cliente" para empezar.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal crear/editar cliente -->
+  <div class="fondo-modal oculto" id="fondo-modal">
+    <div class="tarjeta-modal">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-modal-x">✕</button>
+      <h3 id="titulo-modal">Nuevo cliente</h3>
+
+      <form id="form-cliente">
+        <input type="hidden" id="cliente-id" />
+
+        <div class="mensaje-error" id="error-cliente"></div>
+
+        <div class="campo">
+          <label for="cliente-nombre">Nombre</label>
+          <input type="text" id="cliente-nombre" required />
+        </div>
+
+        <div class="campo">
+          <label for="cliente-telefono">Teléfono</label>
+          <input type="text" id="cliente-telefono" inputmode="tel" required />
+        </div>
+
+        <div class="campo">
+          <label for="cliente-telefono-alterno">Teléfono alterno (opcional)</label>
+          <input type="text" id="cliente-telefono-alterno" inputmode="tel" />
+        </div>
+
+        <div class="campo">
+          <label for="cliente-direccion">Dirección (opcional)</label>
+          <input type="text" id="cliente-direccion" />
+        </div>
+
+        <div class="campo">
+          <label for="cliente-notas">Notas (opcional)</label>
+          <textarea id="cliente-notas" rows="2" placeholder="Ej. casa de dos pisos, portón negro"></textarea>
+        </div>
+
+        <div class="modal-acciones">
+          <button type="button" class="boton boton-secundario" id="boton-cancelar-modal">Cancelar</button>
+          <button type="submit" class="boton boton-primario">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Historial de ventas de un cliente -->
+  <div class="fondo-modal oculto" id="fondo-historial-cliente">
+    <div class="tarjeta-modal tarjeta-modal--ancha">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-historial-cliente-x">✕</button>
+      <h3 id="titulo-historial-cliente">Ventas del cliente</h3>
+      <div id="contenido-historial-cliente"></div>
+      <div class="modal-acciones">
+        <button type="button" class="boton boton-secundario" id="boton-cerrar-historial-cliente">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/sha256.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/clientes.js"></script>
+  <script src="../js/registrar-sw.js"></script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Vender - Los Biónicos</title>
+
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-header__izquierda">
+        <img src="../icons/logo.png" alt="Los Biónicos" class="logo-imagen--header" />
+        <h1 class="app-header__titulo">Los Biónicos</h1>
+      </div>
+
+      <nav class="app-nav">
+        <a href="inicio.html">🏠 Inicio</a>
+        <a href="venta.html" class="activo">🛒 Vender</a>
+        <a href="caja.html">💵 Caja</a>
+        <a href="productos.html">📦 Productos</a>
+        <a href="clientes.html">👤 Clientes</a>
+        <a href="reportes.html">📊 Reportes</a>
+        <a href="respaldo.html" id="nav-respaldo">☁️ Respaldo</a>
+        <a href="usuarios.html" id="nav-usuarios">⚙️ Usuarios</a>
+      </nav>
+
+      <div class="app-header__derecha">
+        <span class="app-header__usuario" id="nombre-usuario-activo"></span>
+        <button class="boton-salir" id="boton-salir">Salir</button>
+      </div>
+    </header>
+
+    <main class="app-main app-main--venta">
+
+      <div id="aviso-caja-cerrada" class="aviso-caja-cerrada oculto">
+        <span class="icono">🔒</span>
+        <h2>No hay una caja abierta</h2>
+        <p>Antes de registrar ventas, alguien debe abrir la caja del turno (contar el efectivo inicial).</p>
+        <a href="caja.html" class="boton boton-primario boton-ancho-auto">Ir a abrir caja</a>
+      </div>
+
+      <div class="venta-layout" id="venta-layout">
+
+        <section class="venta-productos">
+          <input
+            type="search"
+            id="buscador-venta"
+            class="buscador-productos"
+            placeholder="Buscar producto..."
+          />
+
+          <div class="venta-categorias" id="venta-categorias"></div>
+
+          <div id="venta-grilla" class="venta-grilla"></div>
+
+          <div id="venta-estado-vacio" class="estado-vacio oculto">
+            <span class="icono">📦</span>
+            <p>No hay productos activos en el catálogo.</p>
+          </div>
+        </section>
+
+        <aside class="venta-carrito">
+          <h2 class="venta-carrito__titulo">Ticket</h2>
+
+          <div id="carrito-lista" class="carrito-lista"></div>
+
+          <div id="carrito-vacio" class="estado-vacio">
+            <span class="icono">🛒</span>
+            <p>Toca un producto para agregarlo.</p>
+          </div>
+
+          <div class="campo campo--compacto campo-cliente">
+            <label for="venta-cliente-select">👤 Cliente (opcional)</label>
+            <div class="fila-campo-mas-boton fila-campo-mas-boton--compacta">
+              <select id="venta-cliente-select" class="select-compacto">
+                <option value="">— Sin cliente —</option>
+              </select>
+              <button type="button" class="boton-mas-circular boton-mas-circular--chico" id="boton-nuevo-cliente-rapido" title="Agregar cliente nuevo">+</button>
+            </div>
+          </div>
+
+          <div class="entrega-toggle">
+            <button type="button" class="chip-entrega activo" data-tipo="mostrador">🏬 Mostrador</button>
+            <button type="button" class="chip-entrega" data-tipo="domicilio">🛵 A domicilio</button>
+          </div>
+
+          <div id="domicilio-campos" class="domicilio-campos oculto">
+            <div id="domicilio-cliente-info" class="domicilio-cliente-info oculto">
+              📇 Se usarán los datos de <strong id="domicilio-cliente-info-nombre"></strong>
+            </div>
+            <div id="domicilio-campos-cliente-manual">
+              <div class="campo campo--compacto">
+                <label for="domicilio-nombre">Nombre del cliente</label>
+                <input type="text" id="domicilio-nombre" placeholder="Nombre" />
+              </div>
+              <div class="campo campo--compacto">
+                <label for="domicilio-telefono">Teléfono</label>
+                <input type="tel" id="domicilio-telefono" placeholder="Ej. 5555-5555" inputmode="tel" />
+              </div>
+              <div class="campo campo--compacto">
+                <label for="domicilio-direccion">Dirección</label>
+                <input type="text" id="domicilio-direccion" placeholder="Dirección de entrega" />
+              </div>
+            </div>
+            <div class="campo campo--compacto">
+              <label for="domicilio-costo-envio">Costo de envío (Q, opcional)</label>
+              <input type="number" id="domicilio-costo-envio" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+            </div>
+            <div class="campo campo--compacto">
+              <label for="domicilio-telefono-alterno">Teléfono alterno (opcional)</label>
+              <input type="tel" id="domicilio-telefono-alterno" placeholder="Ej. 5555-5555" inputmode="tel" />
+            </div>
+            <div class="campo campo--compacto">
+              <label for="domicilio-notas">Referencia o nota (opcional)</label>
+              <textarea id="domicilio-notas" rows="2" placeholder="Ej. casa color celeste, portón negro"></textarea>
+            </div>
+          </div>
+
+          <div class="carrito-total">
+            <span>Total</span>
+            <span id="carrito-total-monto">Q 0.00</span>
+          </div>
+
+          <div class="metodo-pago">
+            <button type="button" class="chip-pago" data-metodo="efectivo">Efectivo</button>
+            <button type="button" class="chip-pago" data-metodo="tarjeta">Tarjeta</button>
+            <button type="button" class="chip-pago" data-metodo="deposito">Depósito</button>
+          </div>
+
+          <div class="mensaje-error" id="venta-error"></div>
+
+          <button type="button" class="boton boton-primario" id="boton-confirmar-venta">
+            Confirmar venta
+          </button>
+        </aside>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Extra / ajuste de precio por línea del carrito -->
+  <div class="fondo-modal oculto" id="fondo-extra-linea">
+    <div class="tarjeta-modal tarjeta-extra-linea">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-extra-linea-x">✕</button>
+      <h3 id="extra-linea-titulo">Ajustar línea</h3>
+      <div class="campo campo--compacto">
+        <label for="extra-linea-monto">Cargo extra (Q)</label>
+        <input type="number" id="extra-linea-monto" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+      </div>
+      <div class="campo campo--compacto">
+        <label for="extra-linea-nota">Nota (opcional)</label>
+        <input type="text" id="extra-linea-nota" placeholder="Ej. con fruta extra" />
+      </div>
+      <div class="modal-acciones">
+        <button type="button" class="boton boton-secundario" id="boton-cancelar-extra-linea">Cancelar</button>
+        <button type="button" class="boton boton-primario" id="boton-guardar-extra-linea">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recibo -->
+  <div class="fondo-modal oculto" id="fondo-recibo">
+    <div class="tarjeta-modal tarjeta-recibo">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-recibo-x">✕</button>
+      <div id="recibo-contenido" class="recibo-contenido"></div>
+
+      <canvas id="recibo-canvas" style="display:none;"></canvas>
+
+      <div class="modal-acciones">
+        <button type="button" class="boton boton-secundario" id="boton-compartir-recibo">🖨️ Compartir / Imprimir</button>
+        <button type="button" class="boton boton-primario" id="boton-nueva-venta">Nueva venta</button>
+      </div>
+
+      <a id="enlace-descarga-recibo" class="enlace-descarga oculto" download="recibo.png">
+        Descargar imagen del recibo
+      </a>
+    </div>
+  </div>
+
+  <!-- Nuevo cliente rápido -->
+  <div class="fondo-modal oculto" id="fondo-nuevo-cliente">
+    <div class="tarjeta-modal">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-nuevo-cliente-x">✕</button>
+      <h3>Nuevo cliente</h3>
+
+      <div class="mensaje-error" id="error-nuevo-cliente"></div>
+
+      <div class="campo">
+        <label for="nuevo-cliente-nombre">Nombre</label>
+        <input type="text" id="nuevo-cliente-nombre" required />
+      </div>
+
+      <div class="campo">
+        <label for="nuevo-cliente-telefono">Teléfono</label>
+        <input type="tel" id="nuevo-cliente-telefono" inputmode="tel" />
+      </div>
+
+      <div class="campo">
+        <label for="nuevo-cliente-direccion">Dirección (opcional)</label>
+        <input type="text" id="nuevo-cliente-direccion" placeholder="Dirección de entrega" />
+      </div>
+
+      <div class="modal-acciones">
+        <button type="button" class="boton boton-secundario" id="boton-cancelar-nuevo-cliente">Cancelar</button>
+        <button type="button" class="boton boton-primario" id="boton-guardar-nuevo-cliente">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/sha256.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/venta.js"></script>
+  <script src="../js/registrar-sw.js"></script>
+</body>
+</html>

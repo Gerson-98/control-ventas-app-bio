@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Respaldo - Los Biónicos</title>
+
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-header__izquierda">
+        <img src="../icons/logo.png" alt="Los Biónicos" class="logo-imagen--header" />
+        <h1 class="app-header__titulo">Los Biónicos</h1>
+      </div>
+
+      <nav class="app-nav">
+        <a href="inicio.html">🏠 Inicio</a>
+        <a href="venta.html">🛒 Vender</a>
+        <a href="caja.html">💵 Caja</a>
+        <a href="productos.html">📦 Productos</a>
+        <a href="clientes.html">👤 Clientes</a>
+        <a href="reportes.html">📊 Reportes</a>
+        <a href="respaldo.html" class="activo" id="nav-respaldo">☁️ Respaldo</a>
+        <a href="usuarios.html" id="nav-usuarios">⚙️ Usuarios</a>
+      </nav>
+
+      <div class="app-header__derecha">
+        <span class="app-header__usuario" id="nombre-usuario-activo"></span>
+        <button class="boton-salir" id="boton-salir">Salir</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-main__header">
+        <h2>Respaldo</h2>
+      </div>
+
+      <!-- Exportar -->
+      <div class="tarjeta-caja">
+        <h3>Descargar respaldo completo</h3>
+        <p>
+          Todos los datos de la aplicación viven únicamente en este dispositivo.
+          Descarga un respaldo periódicamente y guárdalo en un lugar seguro
+          (correo, Google Drive, USB) por si el iPad se pierde o se borra la app.
+        </p>
+
+        <div id="resumen-respaldo" class="resumen-respaldo">
+          Cargando resumen...
+        </div>
+
+        <div class="mensaje-error" id="mensaje-exportar"></div>
+
+        <button type="button" class="boton boton-primario" id="boton-exportar">
+          Descargar respaldo completo
+        </button>
+      </div>
+
+      <!-- Importar -->
+      <div class="tarjeta-caja tarjeta-caja--peligro">
+        <h3>Restaurar desde un respaldo</h3>
+
+        <div class="aviso-peligro">
+          <strong>Acción delicada:</strong> esto reemplaza TODOS los datos
+          actuales de la app (usuarios, productos, clientes, ventas, cajas y gastos) por
+          los que traiga el archivo elegido. No se puede deshacer.
+        </div>
+
+        <div class="mensaje-error" id="mensaje-importar"></div>
+
+        <div class="campo">
+          <label for="archivo-respaldo">Archivo de respaldo (.json)</label>
+          <input type="file" id="archivo-respaldo" accept=".json,application/json" />
+        </div>
+
+        <button type="button" class="boton boton-secundario" id="boton-importar" disabled>
+          Restaurar desde este archivo
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/sha256.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/respaldo.js"></script>
+  <script src="../js/registrar-sw.js"></script>
+</body>
+</html>

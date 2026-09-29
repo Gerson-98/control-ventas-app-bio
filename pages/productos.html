@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Productos - Los Biónicos</title>
+
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-header__izquierda">
+        <img src="../icons/logo.png" alt="Los Biónicos" class="logo-imagen--header" />
+        <h1 class="app-header__titulo">Los Biónicos</h1>
+      </div>
+
+      <nav class="app-nav">
+        <a href="inicio.html">🏠 Inicio</a>
+        <a href="venta.html">🛒 Vender</a>
+        <a href="caja.html">💵 Caja</a>
+        <a href="productos.html" class="activo">📦 Productos</a>
+        <a href="clientes.html">👤 Clientes</a>
+        <a href="reportes.html">📊 Reportes</a>
+        <a href="respaldo.html" id="nav-respaldo">☁️ Respaldo</a>
+        <a href="usuarios.html" id="nav-usuarios">⚙️ Usuarios</a>
+      </nav>
+
+      <div class="app-header__derecha">
+        <span class="app-header__usuario" id="nombre-usuario-activo"></span>
+        <button class="boton-salir" id="boton-salir">Salir</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-main__header">
+        <h2>Catálogo de productos</h2>
+        <button class="boton boton-primario boton-ancho-auto" id="boton-nuevo-producto">
+          + Nuevo producto
+        </button>
+      </div>
+
+      <input
+        type="search"
+        id="buscador-productos"
+        class="buscador-productos"
+        placeholder="Buscar producto por nombre..."
+      />
+
+      <div id="lista-productos" class="lista-tarjetas"></div>
+
+      <div id="estado-vacio" class="estado-vacio oculto">
+        <span class="icono">📦</span>
+        <p id="estado-vacio-texto">Todavía no has agregado productos.<br />Toca "Nuevo producto" para empezar.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal crear/editar producto -->
+  <div class="fondo-modal oculto" id="fondo-modal">
+    <div class="tarjeta-modal">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-modal-x">✕</button>
+      <h3 id="titulo-modal">Nuevo producto</h3>
+
+      <form id="form-producto">
+        <input type="hidden" id="producto-id" />
+
+        <div class="mensaje-error" id="error-producto"></div>
+
+        <div class="campo">
+          <label for="producto-nombre">Nombre</label>
+          <input type="text" id="producto-nombre" required />
+        </div>
+
+        <div class="campo">
+          <label for="producto-precio">Precio (Q)</label>
+          <input type="number" id="producto-precio" min="0" step="0.01" inputmode="decimal" required />
+        </div>
+
+        <div class="campo">
+          <label for="producto-categoria">Categoría (opcional)</label>
+          <div class="fila-campo-mas-boton">
+            <select id="producto-categoria-select">
+              <option value="">— Sin categoría —</option>
+            </select>
+            <button type="button" class="boton-mas-circular" id="boton-nueva-categoria" title="Crear categoría nueva">+</button>
+          </div>
+          <input type="hidden" id="producto-categoria" />
+        </div>
+
+        <div class="campo oculto" id="campo-costo-wrap">
+          <label for="producto-costo">Costo (Q, opcional — solo lo ve el administrador)</label>
+          <input type="number" id="producto-costo" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+        </div>
+
+        <div class="campo">
+          <label>Foto (opcional)</label>
+          <div class="fila-botones-foto">
+            <button type="button" class="boton boton-secundario boton-foto-opcion" id="boton-tomar-foto">📷 Tomar foto</button>
+            <button type="button" class="boton boton-secundario boton-foto-opcion" id="boton-elegir-galeria">🖼️ Elegir de galería</button>
+          </div>
+          <input type="file" accept="image/*" capture="environment" id="producto-foto-camara" class="oculto" />
+          <input type="file" accept="image/*" id="producto-foto-galeria" class="oculto" />
+          <img id="producto-foto-preview" class="foto-preview oculto" alt="Vista previa de la foto" />
+          <button type="button" class="boton-quitar-foto oculto" id="boton-quitar-foto">Quitar foto</button>
+        </div>
+
+        <div class="modal-acciones">
+          <button type="button" class="boton boton-secundario" id="boton-cancelar-modal">Cancelar</button>
+          <button type="submit" class="boton boton-primario">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/sha256.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/productos.js"></script>
+  <script src="../js/registrar-sw.js"></script>
+</body>
+</html>

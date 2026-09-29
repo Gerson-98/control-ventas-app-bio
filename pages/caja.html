@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Caja - Los Biónicos</title>
+
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-header__izquierda">
+        <img src="../icons/logo.png" alt="Los Biónicos" class="logo-imagen--header" />
+        <h1 class="app-header__titulo">Los Biónicos</h1>
+      </div>
+
+      <nav class="app-nav">
+        <a href="inicio.html">🏠 Inicio</a>
+        <a href="venta.html">🛒 Vender</a>
+        <a href="caja.html" class="activo">💵 Caja</a>
+        <a href="productos.html">📦 Productos</a>
+        <a href="clientes.html">👤 Clientes</a>
+        <a href="reportes.html">📊 Reportes</a>
+        <a href="respaldo.html" id="nav-respaldo">☁️ Respaldo</a>
+        <a href="usuarios.html" id="nav-usuarios">⚙️ Usuarios</a>
+      </nav>
+
+      <div class="app-header__derecha">
+        <span class="app-header__usuario" id="nombre-usuario-activo"></span>
+        <button class="boton-salir" id="boton-salir">Salir</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-main__header">
+        <h2>Caja</h2>
+      </div>
+
+      <!-- Estado: sin caja abierta -->
+      <div class="tarjeta-caja oculto" id="tarjeta-sin-caja">
+        <div class="caja-estado-vacio">
+          <span class="icono">💰</span>
+          <p>No hay una caja abierta.<br />Cuenta el efectivo del cajón para iniciar el turno.</p>
+        </div>
+
+        <div class="mensaje-error" id="error-abrir-caja"></div>
+
+        <form id="form-abrir-caja">
+          <div class="campo">
+            <label for="monto-inicial">Monto inicial en efectivo (Q)</label>
+            <input type="number" id="monto-inicial" min="0" step="0.01" inputmode="decimal" required />
+          </div>
+
+          <button type="submit" class="boton boton-primario">Abrir caja</button>
+        </form>
+      </div>
+
+      <!-- Estado: caja abierta -->
+      <div class="tarjeta-caja oculto" id="tarjeta-caja-abierta">
+        <h3>Turno actual</h3>
+
+        <div class="caja-info-lista">
+          <div class="caja-info-fila">
+            <span>Abierta por</span>
+            <span id="caja-usuario">-</span>
+          </div>
+          <div class="caja-info-fila">
+            <span>Hora de apertura</span>
+            <span id="caja-hora-apertura">-</span>
+          </div>
+          <div class="caja-info-fila">
+            <span>Monto inicial</span>
+            <span id="caja-monto-inicial">Q 0.00</span>
+          </div>
+        </div>
+
+        <div class="caja-resumen-item caja-resumen-item--total-ventas">
+          <span class="caja-resumen-item__etiqueta">💰 Ventas totales del turno</span>
+          <span class="caja-resumen-item__valor" id="caja-total-ventas">Q 0.00</span>
+        </div>
+
+        <div class="caja-resumen-grid">
+          <div class="caja-resumen-item">
+            <span class="caja-resumen-item__etiqueta">💵 Efectivo</span>
+            <span class="caja-resumen-item__valor" id="caja-total-efectivo">Q 0.00</span>
+          </div>
+          <div class="caja-resumen-item">
+            <span class="caja-resumen-item__etiqueta">💳 Tarjeta</span>
+            <span class="caja-resumen-item__valor" id="caja-total-tarjeta">Q 0.00</span>
+          </div>
+          <div class="caja-resumen-item">
+            <span class="caja-resumen-item__etiqueta">🏦 Depósito/transferencia</span>
+            <span class="caja-resumen-item__valor" id="caja-total-deposito">Q 0.00</span>
+          </div>
+          <div class="caja-resumen-item">
+            <span class="caja-resumen-item__etiqueta">Gastos del turno</span>
+            <span class="caja-resumen-item__valor" id="caja-total-gastos">− Q 0.00</span>
+          </div>
+          <div class="caja-resumen-item">
+            <span class="caja-resumen-item__etiqueta">Ingresos del turno</span>
+            <span class="caja-resumen-item__valor" id="caja-total-ingresos">+ Q 0.00</span>
+          </div>
+
+          <div class="caja-resumen-item caja-resumen-item--esperado">
+            <span class="caja-resumen-item__etiqueta">Efectivo esperado</span>
+            <span class="caja-resumen-item__valor" id="caja-efectivo-esperado">Q 0.00</span>
+          </div>
+        </div>
+
+        <button type="button" class="boton boton-primario boton-ancho-auto" id="boton-cerrar-caja">
+          Cerrar caja
+        </button>
+
+        <!-- Movimientos de caja (gastos e ingresos) -->
+        <div class="caja-movimientos">
+          <h4>Gastos e ingresos de caja (aparte de las ventas)</h4>
+
+          <div class="mensaje-error" id="error-agregar-movimiento"></div>
+
+          <form id="form-agregar-movimiento">
+            <div class="chip-selector" id="selector-tipo-movimiento">
+              <button type="button" class="chip-tipo-movimiento chip-tipo-movimiento--activo" data-tipo="gasto" id="chip-tipo-gasto">🔴 Gasto</button>
+              <button type="button" class="chip-tipo-movimiento" data-tipo="ingreso" id="chip-tipo-ingreso">🟢 Ingreso</button>
+            </div>
+            <input type="hidden" id="movimiento-tipo" value="gasto" />
+
+            <div class="campo">
+              <label for="movimiento-descripcion">Descripción</label>
+              <input type="text" id="movimiento-descripcion" placeholder="Ej. Compra de fresas" required />
+            </div>
+
+            <div class="campo">
+              <label for="movimiento-monto">Monto (Q)</label>
+              <input type="number" id="movimiento-monto" min="0" step="0.01" inputmode="decimal" required />
+            </div>
+
+            <button type="submit" class="boton boton-primario">Registrar</button>
+          </form>
+
+          <div class="tabla-reportes-envoltorio">
+            <table class="tabla-reportes">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Hora</th>
+                  <th>Descripción</th>
+                  <th>Monto</th>
+                  <th>Registrado por</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="cuerpo-lista-movimientos"></tbody>
+            </table>
+          </div>
+
+          <div id="estado-vacio-movimientos" class="estado-vacio oculto">
+            <span class="icono">🧾</span>
+            <p>Todavía no hay gastos ni ingresos registrados en este turno (las ventas se ven abajo, en "Ventas del turno").</p>
+          </div>
+        </div>
+
+        <!-- Ventas del turno actual -->
+        <div class="caja-ventas-turno">
+          <h4>Ventas del turno</h4>
+
+          <div class="tabla-reportes-envoltorio">
+            <table class="tabla-reportes">
+              <thead>
+                <tr>
+                  <th>Recibo</th>
+                  <th>Hora</th>
+                  <th>Método</th>
+                  <th>Tipo</th>
+                  <th>Cliente</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="cuerpo-ventas-turno"></tbody>
+            </table>
+          </div>
+
+          <div id="estado-vacio-ventas-turno" class="estado-vacio oculto">
+            <span class="icono">🧺</span>
+            <p>Todavía no hay ventas registradas en este turno.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historial de cajas cerradas -->
+      <div class="tarjeta-caja">
+        <h3>Historial de cierres</h3>
+
+        <div class="tabla-reportes-envoltorio">
+          <table class="tabla-reportes">
+            <thead>
+              <tr>
+                <th>Apertura</th>
+                <th>Cierre</th>
+                <th>Abrió</th>
+                <th>Cerró</th>
+                <th>Monto inicial</th>
+                <th>Monto contado</th>
+                <th>Diferencia</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpo-historial-cajas"></tbody>
+          </table>
+        </div>
+
+        <div id="estado-vacio-historial" class="estado-vacio oculto">
+          <span class="icono">🗂️</span>
+          <p>Todavía no hay cierres de caja registrados.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal cerrar caja -->
+  <div class="fondo-modal oculto" id="fondo-modal-cierre">
+    <div class="tarjeta-modal">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-modal-cierre-x">✕</button>
+      <h3>Cerrar caja</h3>
+
+      <div id="paso-conteo-cierre">
+        <p>Cuenta el efectivo físico que hay en el cajón e ingrésalo aquí.</p>
+
+        <div class="mensaje-error" id="error-cerrar-caja"></div>
+
+        <form id="form-cerrar-caja">
+          <div class="campo">
+            <label for="monto-contado">Efectivo contado (Q)</label>
+            <input type="number" id="monto-contado" min="0" step="0.01" inputmode="decimal" required />
+          </div>
+
+          <div class="modal-acciones">
+            <button type="button" class="boton boton-secundario" id="boton-cancelar-cierre">Cancelar</button>
+            <button type="submit" class="boton boton-primario">Calcular</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="paso-resultado-cierre" class="oculto">
+        <div id="caja-resultado-cierre-caja"></div>
+
+        <div class="campo" id="campo-motivo-diferencia">
+          <label for="motivo-diferencia">Nota / motivo de la diferencia (opcional)</label>
+          <textarea id="motivo-diferencia" rows="2" placeholder="Ej. Faltan Q200 porque se compró comida para el personal"></textarea>
+        </div>
+
+        <div class="modal-acciones">
+          <button type="button" class="boton boton-secundario" id="boton-volver-conteo">Volver</button>
+          <button type="button" class="boton boton-primario" id="boton-confirmar-cierre">Confirmar cierre</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal detalle de caja histórica -->
+  <div class="fondo-modal oculto" id="fondo-modal-detalle-caja">
+    <div class="tarjeta-modal tarjeta-modal--ancha">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-detalle-caja-x">✕</button>
+      <h3>Detalle del turno</h3>
+      <div id="contenido-detalle-caja"></div>
+      <div class="modal-acciones">
+        <button type="button" class="boton boton-secundario" id="boton-cerrar-detalle-caja">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/sha256.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/caja.js"></script>
+  <script src="../js/registrar-sw.js"></script>
+</body>
+</html>

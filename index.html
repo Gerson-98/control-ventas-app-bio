@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Los Biónicos - Control de Ventas</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+
+  <!-- Soporte específico para "Agregar a inicio" en iOS/Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="pantalla-login">
+    <div class="tarjeta-login">
+      <div class="tarjeta-login__logo">
+        <img src="icons/logo.png" alt="Los Biónicos" class="logo-imagen" />
+      </div>
+      <h1 id="titulo-app">Iniciar sesión</h1>
+      <p class="subtitulo" id="subtitulo-app">Frutería Los Biónicos</p>
+
+      <!-- Login normal -->
+      <form id="form-login" class="oculto">
+        <div class="mensaje-error" id="error-login"></div>
+
+        <div class="campo">
+          <label for="login-usuario">Usuario</label>
+          <input type="text" id="login-usuario" autocomplete="username" autocapitalize="none" required />
+        </div>
+
+        <div class="campo">
+          <label for="login-password">Contraseña</label>
+          <input type="password" id="login-password" autocomplete="current-password" required />
+        </div>
+
+        <button type="submit" class="boton boton-primario">Entrar</button>
+      </form>
+
+      <!-- Primer arranque: crear cuenta de dueña -->
+      <form id="form-setup" class="oculto">
+        <div class="mensaje-error" id="error-setup"></div>
+
+        <div class="campo">
+          <label for="setup-nombre">Tu nombre</label>
+          <input type="text" id="setup-nombre" autocomplete="name" required />
+        </div>
+
+        <div class="campo">
+          <label for="setup-usuario">Usuario</label>
+          <input type="text" id="setup-usuario" autocomplete="username" autocapitalize="none" required />
+        </div>
+
+        <div class="campo">
+          <label for="setup-password">Contraseña</label>
+          <input type="password" id="setup-password" autocomplete="new-password" required />
+        </div>
+
+        <div class="campo">
+          <label for="setup-password-confirma">Confirmar contraseña</label>
+          <input type="password" id="setup-password-confirma" autocomplete="new-password" required />
+        </div>
+
+        <button type="submit" class="boton boton-primario">Crear cuenta y entrar</button>
+      </form>
+
+      <p class="pie-login">Todos los datos se guardan solo en este dispositivo</p>
+    </div>
+  </div>
+
+  <script src="js/sha256.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/registrar-sw.js"></script>
+</body>
+</html>

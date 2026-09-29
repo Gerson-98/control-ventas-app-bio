@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Reportes - Los Biónicos</title>
+
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-header__izquierda">
+        <img src="../icons/logo.png" alt="Los Biónicos" class="logo-imagen--header" />
+        <h1 class="app-header__titulo">Los Biónicos</h1>
+      </div>
+
+      <nav class="app-nav">
+        <a href="inicio.html">🏠 Inicio</a>
+        <a href="venta.html">🛒 Vender</a>
+        <a href="caja.html">💵 Caja</a>
+        <a href="productos.html">📦 Productos</a>
+        <a href="clientes.html">👤 Clientes</a>
+        <a href="reportes.html" class="activo">📊 Reportes</a>
+        <a href="respaldo.html" id="nav-respaldo">☁️ Respaldo</a>
+        <a href="usuarios.html" id="nav-usuarios">⚙️ Usuarios</a>
+      </nav>
+
+      <div class="app-header__derecha">
+        <span class="app-header__usuario" id="nombre-usuario-activo"></span>
+        <button class="boton-salir" id="boton-salir">Salir</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-main__header">
+        <h2>Reportes de ventas</h2>
+      </div>
+
+      <div class="tarjetas-resumen">
+        <div class="tarjeta-resumen">
+          <span class="tarjeta-resumen__etiqueta">Hoy</span>
+          <span class="tarjeta-resumen__total" id="resumen-hoy-total">Q 0.00</span>
+          <span class="tarjeta-resumen__cantidad" id="resumen-hoy-cantidad">0 ventas</span>
+        </div>
+        <div class="tarjeta-resumen oculto" id="tarjeta-semana">
+          <span class="tarjeta-resumen__etiqueta">Esta semana</span>
+          <span class="tarjeta-resumen__total" id="resumen-semana-total">Q 0.00</span>
+          <span class="tarjeta-resumen__cantidad" id="resumen-semana-cantidad">0 ventas</span>
+        </div>
+        <div class="tarjeta-resumen oculto" id="tarjeta-mes">
+          <span class="tarjeta-resumen__etiqueta">Este mes</span>
+          <span class="tarjeta-resumen__total" id="resumen-mes-total">Q 0.00</span>
+          <span class="tarjeta-resumen__cantidad" id="resumen-mes-cantidad">0 ventas</span>
+        </div>
+        <div class="tarjeta-resumen tarjeta-resumen--ganancia oculto" id="tarjeta-ganancia">
+          <span class="tarjeta-resumen__etiqueta">Ganancia (periodo)</span>
+          <span class="tarjeta-resumen__total" id="resumen-ganancia-total">Q 0.00</span>
+          <span class="tarjeta-resumen__cantidad">Ingresos − costo de productos</span>
+        </div>
+      </div>
+
+      <div class="app-main__header" id="titulo-caja-cajero">
+        <h2 style="font-size:18px;">💵 Para cuadrar caja hoy</h2>
+      </div>
+      <div class="tarjetas-resumen" id="resumen-metodos-pago">
+        <div class="tarjeta-resumen">
+          <span class="tarjeta-resumen__etiqueta">Efectivo</span>
+          <span class="tarjeta-resumen__total" id="resumen-efectivo-total">Q 0.00</span>
+        </div>
+        <div class="tarjeta-resumen">
+          <span class="tarjeta-resumen__etiqueta">Tarjeta</span>
+          <span class="tarjeta-resumen__total" id="resumen-tarjeta-total">Q 0.00</span>
+        </div>
+        <div class="tarjeta-resumen">
+          <span class="tarjeta-resumen__etiqueta">Depósito</span>
+          <span class="tarjeta-resumen__total" id="resumen-deposito-total">Q 0.00</span>
+        </div>
+      </div>
+
+      <div class="pestanas-periodo" id="pestanas-periodo">
+        <button class="pestana-periodo activo" data-periodo="dia">Hoy</button>
+        <button class="pestana-periodo" data-periodo="dia-especifico">Día específico</button>
+        <button class="pestana-periodo oculto" data-periodo="semana-especifica">Semana específica</button>
+        <button class="pestana-periodo oculto" data-periodo="mes-especifico">Mes específico</button>
+        <button class="pestana-periodo oculto" data-periodo="anio-especifico">Año específico</button>
+        <button class="pestana-periodo oculto" data-periodo="rango">Rango de fechas</button>
+      </div>
+
+      <div class="filtro-especifico-controles" id="filtro-especifico-controles">
+        <input type="date" id="filtro-fecha-dia" class="oculto" />
+        <input type="date" id="filtro-fecha-semana" class="oculto" title="Elige cualquier día de la semana que quieres ver" />
+        <input type="month" id="filtro-fecha-mes" class="oculto" />
+        <select id="filtro-fecha-anio" class="oculto"></select>
+        <div id="filtro-rango-fechas" class="filtro-rango-fechas oculto">
+          <div class="campo campo--compacto">
+            <label for="filtro-rango-desde">Desde</label>
+            <input type="date" id="filtro-rango-desde" />
+          </div>
+          <div class="campo campo--compacto">
+            <label for="filtro-rango-hasta">Hasta</label>
+            <input type="date" id="filtro-rango-hasta" />
+          </div>
+        </div>
+      </div>
+
+      <div class="app-main__header">
+        <h3 id="titulo-periodo-tabla" style="font-size:16px; margin:0;">Ventas de hoy</h3>
+      </div>
+
+      <div class="tabla-reportes-envoltorio">
+        <table class="tabla-reportes">
+          <thead>
+            <tr>
+              <th>N° recibo</th>
+              <th>Fecha y hora</th>
+              <th>Cajero</th>
+              <th>Método de pago</th>
+              <th>Entrega</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo-tabla-reportes"></tbody>
+        </table>
+      </div>
+
+      <div id="estado-vacio-reportes" class="estado-vacio oculto">
+        <span class="icono">🧾</span>
+        <p>No hay ventas registradas en este periodo.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/sha256.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/reportes.js"></script>
+  <script src="../js/registrar-sw.js"></script>
+</body>
+</html>

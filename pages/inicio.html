@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Inicio - Los Biónicos</title>
+
+  <link rel="manifest" href="../manifest.json" />
+  <meta name="theme-color" content="#f5a623" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Biónicos" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header app-header--inicio">
+      <div class="app-header__izquierda">
+        <img src="../icons/logo.png" alt="Los Biónicos" class="logo-imagen--header" />
+        <h1 class="app-header__titulo">Los Biónicos</h1>
+      </div>
+
+      <div class="app-header__derecha">
+        <span class="app-header__usuario" id="nombre-usuario-activo"></span>
+        <button class="boton-salir" id="boton-salir">Salir</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-main__header">
+        <h2>¿Qué quieres hacer?</h2>
+      </div>
+
+      <div class="inicio-grid">
+        <a href="venta.html" class="inicio-boton inicio-boton--vender">
+          <span class="inicio-boton__icono">🛒</span>
+          <span class="inicio-boton__texto">Vender</span>
+        </a>
+        <a href="caja.html" class="inicio-boton inicio-boton--caja">
+          <span class="inicio-boton__icono">💵</span>
+          <span class="inicio-boton__texto">Caja</span>
+        </a>
+        <a href="productos.html" class="inicio-boton inicio-boton--productos">
+          <span class="inicio-boton__icono">📦</span>
+          <span class="inicio-boton__texto">Productos</span>
+        </a>
+        <a href="clientes.html" class="inicio-boton inicio-boton--clientes">
+          <span class="inicio-boton__icono">👤</span>
+          <span class="inicio-boton__texto">Clientes</span>
+        </a>
+        <a href="reportes.html" class="inicio-boton inicio-boton--reportes">
+          <span class="inicio-boton__icono">📊</span>
+          <span class="inicio-boton__texto">Reportes</span>
+        </a>
+        <a href="respaldo.html" class="inicio-boton inicio-boton--respaldo oculto" id="boton-inicio-respaldo">
+          <span class="inicio-boton__icono">☁️</span>
+          <span class="inicio-boton__texto">Respaldo</span>
+        </a>
+        <a href="usuarios.html" class="inicio-boton inicio-boton--usuarios oculto" id="boton-inicio-usuarios">
+          <span class="inicio-boton__icono">⚙️</span>
+          <span class="inicio-boton__texto">Usuarios</span>
+        </a>
+      </div>
+
+      <div class="resumen-hoy-inicio">
+        <div class="resumen-hoy-inicio__item">
+          <span class="resumen-hoy-inicio__etiqueta">Estado de caja</span>
+          <span class="resumen-hoy-inicio__valor" id="resumen-estado-caja">Cargando...</span>
+        </div>
+        <div class="resumen-hoy-inicio__item" id="resumen-ventas-hoy-wrap">
+          <span class="resumen-hoy-inicio__etiqueta">Ventas de hoy</span>
+          <span class="resumen-hoy-inicio__valor" id="resumen-ventas-hoy">Q 0.00</span>
+        </div>
+        <div class="resumen-hoy-inicio__item">
+          <span class="resumen-hoy-inicio__etiqueta">Fecha</span>
+          <span class="resumen-hoy-inicio__valor" id="resumen-fecha-hoy">—</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/sha256.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/inicio.js"></script>
+  <script src="../js/registrar-sw.js"></script>
+</body>
+</html>
