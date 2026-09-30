@@ -1218,6 +1218,22 @@ button, input, select {
   opacity: 0.8;
 }
 
+.boton-reimprimir-recibo {
+  background: var(--color-primario-fondo, #fdecd2);
+  color: var(--color-primario, #c97a1a);
+  border: none;
+  border-radius: var(--radio);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-reimprimir-recibo:active {
+  opacity: 0.8;
+}
+
 .etiqueta-venta-cancelada {
   display: inline-block;
   background: var(--color-error-fondo);

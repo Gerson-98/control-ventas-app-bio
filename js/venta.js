@@ -651,7 +651,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function dibujarReciboCanvas(venta) {
-    const ancho = 380;
+    const ancho = 384;
     const margenX = 24;
     const alturaLinea = 24;
     const alturaNota = 16;
@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ctx.scale(escalaImpresion, escalaImpresion);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, ancho, alto);
-    ctx.fillStyle = '#2b2416';
+    ctx.fillStyle = '#000000';
     ctx.textBaseline = 'top';
 
     let y = 20;
@@ -787,6 +787,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     ctx.font = 'italic 13px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('¡Gracias por su compra!', ancho / 2, y);
+
+    // Las impresoras térmicas solo imprimen blanco o negro puro (sin grises).
+    // Sin este paso, el suavizado (antialiasing) del texto queda en tonos
+    // grises que la app de impresión convierte de forma inconsistente,
+    // resultando en un ticket borroso o "pixelado". Aquí se convierte cada
+    // píxel a blanco o negro puro antes de compartir la imagen.
+    binarizarCanvas(reciboCanvas);
+  }
+
+  function binarizarCanvas(canvas) {
+    const ctx = canvas.getContext('2d');
+    const { width, height } = canvas;
+    const imagenDatos = ctx.getImageData(0, 0, width, height);
+    const datos = imagenDatos.data;
+    const umbral = 180;
+    for (let i = 0; i < datos.length; i += 4) {
+      const luminancia = 0.299 * datos[i] + 0.587 * datos[i + 1] + 0.114 * datos[i + 2];
+      const valor = luminancia < umbral ? 0 : 255;
+      datos[i] = valor;
+      datos[i + 1] = valor;
+      datos[i + 2] = valor;
+    }
+    ctx.putImageData(imagenDatos, 0, 0);
   }
 
   function recortarTexto(ctx, texto, maxAncho) {

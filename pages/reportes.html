@@ -126,6 +126,7 @@
               <th>Entrega</th>
               <th>Cliente</th>
               <th>Total</th>
+              <th>Recibo</th>
               <th>Acción</th>
             </tr>
           </thead>
@@ -138,6 +139,25 @@
         <p>No hay ventas registradas en este periodo.</p>
       </div>
     </main>
+  </div>
+
+  <!-- Recibo (reimpresión) -->
+  <div class="fondo-modal oculto" id="fondo-recibo">
+    <div class="tarjeta-modal tarjeta-recibo">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-recibo-x">✕</button>
+      <div id="recibo-contenido" class="recibo-contenido"></div>
+
+      <canvas id="recibo-canvas" style="display:none;"></canvas>
+
+      <div class="modal-acciones">
+        <button type="button" class="boton boton-secundario" id="boton-compartir-recibo">🖨️ Compartir / Imprimir</button>
+        <button type="button" class="boton boton-primario" id="boton-cerrar-recibo">Cerrar</button>
+      </div>
+
+      <a id="enlace-descarga-recibo" class="enlace-descarga oculto" download="recibo.png">
+        Descargar imagen del recibo
+      </a>
+    </div>
   </div>
 
   <script src="../js/sha256.js"></script>

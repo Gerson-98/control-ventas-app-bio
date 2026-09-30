@@ -16,6 +16,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = '../index.html';
   });
 
+  const fondoRecibo = document.getElementById('fondo-recibo');
+  const reciboContenidoEl = document.getElementById('recibo-contenido');
+  const reciboCanvas = document.getElementById('recibo-canvas');
+  const botonCompartirRecibo = document.getElementById('boton-compartir-recibo');
+  const botonCerrarRecibo = document.getElementById('boton-cerrar-recibo');
+  const botonCerrarReciboX = document.getElementById('boton-cerrar-recibo-x');
+  const enlaceDescargaRecibo = document.getElementById('enlace-descarga-recibo');
+
   const cuerpoTablaEl = document.getElementById('cuerpo-tabla-reportes');
   const estadoVacioEl = document.getElementById('estado-vacio-reportes');
   const tablaEnvoltorioEl = document.querySelector('.tabla-reportes-envoltorio');
@@ -404,6 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${etiquetaEntrega}</td>
         <td>${etiquetaCliente}</td>
         <td>${formatearPrecio(venta.total || 0)}</td>
+        <td><button type="button" class="boton-reimprimir-recibo" data-venta-id="${venta.id}">🖨️ Ver / Imprimir</button></td>
         <td>${celdaAccion}</td>
       `;
 
@@ -411,6 +420,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const boton = fila.querySelector('.boton-cancelar-venta');
         boton.addEventListener('click', () => cancelarVenta(venta));
       }
+
+      const botonRecibo = fila.querySelector('.boton-reimprimir-recibo');
+      botonRecibo.addEventListener('click', () => abrirReciboDesdeHistorial(venta, nombreCajero));
 
       cuerpoTablaEl.appendChild(fila);
     }
@@ -547,6 +559,301 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await renderizarTabla();
   }
+
+  // ---------- Reimprimir recibo de una venta histórica ----------
+
+  function etiquetaMetodoPagoRecibo(metodo) {
+    return etiquetasMetodoPago[metodo] || metodo || '—';
+  }
+
+  async function abrirReciboDesdeHistorial(venta, nombreCajero) {
+    const detalle = await DB.obtenerPorIndice(DB.STORES.DETALLE_VENTA, 'ventaId', venta.id);
+    const lineas = detalle.map((d) => ({
+      nombre: d.nombreProducto,
+      precio: d.precioUnitario,
+      cantidad: d.cantidad,
+      extra: d.extra || 0,
+      nota: d.nota || '',
+    }));
+
+    mostrarRecibo({
+      numeroRecibo: venta.numeroRecibo,
+      fecha: venta.fecha,
+      cajero: nombreCajero,
+      metodoPago: venta.metodoPago,
+      lineas,
+      costoEnvio: venta.costoEnvio || 0,
+      total: venta.total,
+      esDomicilio: venta.esDomicilio,
+      clienteNombre: venta.clienteNombre || '',
+      clienteTelefono: venta.clienteTelefono || '',
+      clienteDireccion: venta.clienteDireccion || '',
+      telefonoAlterno: venta.telefonoAlterno || '',
+      notasEntrega: venta.notasEntrega || '',
+    });
+  }
+
+  function mostrarRecibo(venta) {
+    const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+
+    let filasHtml = '';
+    venta.lineas.forEach((linea) => {
+      const extra = linea.extra || 0;
+      const subtotal = (linea.precio + extra) * linea.cantidad;
+      const nombreConExtra = extra > 0
+        ? `${escaparHtml(linea.nombre)} (+${formatearPrecio(extra)} extra c/u)`
+        : escaparHtml(linea.nombre);
+      const notaHtml = linea.nota
+        ? `<div class="recibo-linea-nota"><em>${escaparHtml(linea.nota)}</em></div>`
+        : '';
+      filasHtml += `
+        <div class="recibo-linea">
+          <span>${linea.cantidad} × ${nombreConExtra}</span>
+          <span>${formatearPrecio(subtotal)}</span>
+        </div>
+        ${notaHtml}
+      `;
+    });
+
+    const envioHtml =
+      venta.esDomicilio && venta.costoEnvio > 0
+        ? `<div class="recibo-linea"><span>Envío a domicilio</span><span>${formatearPrecio(venta.costoEnvio)}</span></div>`
+        : '';
+
+    const domicilioHtml = venta.esDomicilio
+      ? `
+        <div class="recibo-domicilio">
+          <strong>🛵 Entrega a domicilio</strong>
+          ${venta.clienteNombre ? `<div>${escaparHtml(venta.clienteNombre)}</div>` : ''}
+          <div>${escaparHtml(venta.clienteTelefono)}</div>
+          <div>${escaparHtml(venta.clienteDireccion)}</div>
+          ${venta.telefonoAlterno ? `<div>Tel. alterno: ${escaparHtml(venta.telefonoAlterno)}</div>` : ''}
+          ${venta.notasEntrega ? `<div><em>${escaparHtml(venta.notasEntrega)}</em></div>` : ''}
+        </div>
+      `
+      : '';
+
+    reciboContenidoEl.innerHTML = `
+      <h3 class="recibo-titulo">Frutería Los Biónicos</h3>
+      <p class="recibo-meta">${fechaTexto}</p>
+      <p class="recibo-meta">Recibo #${venta.numeroRecibo}</p>
+      <p class="recibo-meta">Cajero: ${escaparHtml(venta.cajero)}</p>
+      <hr class="recibo-separador" />
+      <div class="recibo-lineas">${filasHtml}</div>
+      ${envioHtml}
+      <hr class="recibo-separador" />
+      <div class="recibo-total">
+        <span>Total</span>
+        <span>${formatearPrecio(venta.total)}</span>
+      </div>
+      <p class="recibo-metodo">Método de pago: ${etiquetaMetodoPagoRecibo(venta.metodoPago)}</p>
+      ${domicilioHtml}
+      <p class="recibo-gracias">¡Gracias por su compra!</p>
+    `;
+
+    dibujarReciboCanvas(venta);
+
+    enlaceDescargaRecibo.classList.add('oculto');
+    fondoRecibo.classList.remove('oculto');
+  }
+
+  function dibujarReciboCanvas(venta) {
+    const ancho = 384;
+    const margenX = 24;
+    const alturaLinea = 24;
+    const alturaNota = 16;
+    const tieneEnvio = venta.esDomicilio && venta.costoEnvio > 0;
+    let lineasDomicilio = venta.esDomicilio ? 3 : 0;
+    if (venta.esDomicilio && venta.telefonoAlterno) lineasDomicilio += 1;
+    if (venta.esDomicilio && venta.notasEntrega) lineasDomicilio += 1;
+    let alturaFija = 220;
+    if (tieneEnvio) alturaFija += alturaLinea;
+    if (venta.esDomicilio) alturaFija += lineasDomicilio * 18 + 20;
+    const cantidadNotas = venta.lineas.filter((l) => l.nota).length;
+    const alto = alturaFija + venta.lineas.length * alturaLinea + cantidadNotas * alturaNota;
+
+    const escalaImpresion = 1.5;
+    reciboCanvas.width = ancho * escalaImpresion;
+    reciboCanvas.height = alto * escalaImpresion;
+
+    const ctx = reciboCanvas.getContext('2d');
+    ctx.scale(escalaImpresion, escalaImpresion);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, ancho, alto);
+    ctx.fillStyle = '#000000';
+    ctx.textBaseline = 'top';
+
+    let y = 20;
+
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Frutería Los Biónicos', ancho / 2, y);
+    y += 30;
+
+    const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+
+    ctx.font = '13px sans-serif';
+    ctx.fillText(fechaTexto, ancho / 2, y);
+    y += 20;
+    ctx.fillText(`Recibo #${venta.numeroRecibo}`, ancho / 2, y);
+    y += 20;
+    ctx.fillText(`Cajero: ${venta.cajero}`, ancho / 2, y);
+    y += 20;
+
+    ctx.textAlign = 'left';
+    ctx.strokeStyle = '#cccccc';
+    ctx.beginPath();
+    ctx.moveTo(margenX, y);
+    ctx.lineTo(ancho - margenX, y);
+    ctx.stroke();
+    y += 14;
+
+    ctx.font = '13px sans-serif';
+    venta.lineas.forEach((linea) => {
+      const extra = linea.extra || 0;
+      const subtotal = (linea.precio + extra) * linea.cantidad;
+      const precioTexto = extra > 0
+        ? `${formatearPrecio(linea.precio)} +${formatearPrecio(extra)} extra`
+        : formatearPrecio(linea.precio);
+      const textoIzq = `${linea.cantidad} x ${linea.nombre} (${precioTexto})`;
+      const textoDer = formatearPrecio(subtotal);
+      ctx.textAlign = 'left';
+      ctx.font = '13px sans-serif';
+      ctx.fillText(recortarTexto(ctx, textoIzq, ancho - margenX * 2 - 70), margenX, y);
+      ctx.textAlign = 'right';
+      ctx.fillText(textoDer, ancho - margenX, y);
+      y += alturaLinea;
+      if (linea.nota) {
+        ctx.textAlign = 'left';
+        ctx.font = 'italic 11px sans-serif';
+        ctx.fillText(recortarTexto(ctx, linea.nota, ancho - margenX * 2), margenX, y);
+        y += alturaNota;
+      }
+    });
+
+    if (tieneEnvio) {
+      ctx.textAlign = 'left';
+      ctx.fillText('Envío a domicilio', margenX, y);
+      ctx.textAlign = 'right';
+      ctx.fillText(formatearPrecio(venta.costoEnvio), ancho - margenX, y);
+      y += alturaLinea;
+    }
+
+    ctx.textAlign = 'left';
+    ctx.beginPath();
+    ctx.moveTo(margenX, y);
+    ctx.lineTo(ancho - margenX, y);
+    ctx.stroke();
+    y += 16;
+
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Total', margenX, y);
+    ctx.textAlign = 'right';
+    ctx.fillText(formatearPrecio(venta.total), ancho - margenX, y);
+    y += 30;
+
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Método de pago: ${etiquetaMetodoPagoRecibo(venta.metodoPago)}`, ancho / 2, y);
+    y += 24;
+
+    if (venta.esDomicilio) {
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('🛵 Entrega a domicilio', margenX, y);
+      y += 18;
+      ctx.font = '13px sans-serif';
+      if (venta.clienteNombre) {
+        ctx.fillText(venta.clienteNombre, margenX, y);
+        y += 18;
+      }
+      ctx.fillText(venta.clienteTelefono, margenX, y);
+      y += 18;
+      ctx.fillText(recortarTexto(ctx, venta.clienteDireccion, ancho - margenX * 2), margenX, y);
+      y += 18;
+      if (venta.telefonoAlterno) {
+        ctx.fillText(`Tel. alterno: ${venta.telefonoAlterno}`, margenX, y);
+        y += 18;
+      }
+      if (venta.notasEntrega) {
+        ctx.font = 'italic 13px sans-serif';
+        ctx.fillText(recortarTexto(ctx, venta.notasEntrega, ancho - margenX * 2), margenX, y);
+        y += 18;
+      }
+      y += 2;
+    }
+
+    ctx.font = 'italic 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('¡Gracias por su compra!', ancho / 2, y);
+
+    binarizarCanvas(reciboCanvas);
+  }
+
+  function binarizarCanvas(canvas) {
+    const ctx = canvas.getContext('2d');
+    const { width, height } = canvas;
+    const imagenDatos = ctx.getImageData(0, 0, width, height);
+    const datos = imagenDatos.data;
+    const umbral = 180;
+    for (let i = 0; i < datos.length; i += 4) {
+      const luminancia = 0.299 * datos[i] + 0.587 * datos[i + 1] + 0.114 * datos[i + 2];
+      const valor = luminancia < umbral ? 0 : 255;
+      datos[i] = valor;
+      datos[i + 1] = valor;
+      datos[i + 2] = valor;
+    }
+    ctx.putImageData(imagenDatos, 0, 0);
+  }
+
+  function recortarTexto(ctx, texto, maxAncho) {
+    if (ctx.measureText(texto).width <= maxAncho) return texto;
+    let recortado = texto;
+    while (recortado.length > 0 && ctx.measureText(recortado + '…').width > maxAncho) {
+      recortado = recortado.slice(0, -1);
+    }
+    return recortado + '…';
+  }
+
+  botonCompartirRecibo.addEventListener('click', async () => {
+    enlaceDescargaRecibo.classList.add('oculto');
+
+    reciboCanvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      const archivo = new File([blob], `recibo-${Date.now()}.png`, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [archivo] }) && navigator.share) {
+        try {
+          await navigator.share({ files: [archivo], title: 'Recibo Los Biónicos' });
+          return;
+        } catch (err) {
+          // el usuario canceló o falló; caemos al método alternativo
+        }
+      }
+
+      const dataUrl = reciboCanvas.toDataURL('image/png');
+      enlaceDescargaRecibo.href = dataUrl;
+      enlaceDescargaRecibo.download = `recibo-${Date.now()}.png`;
+      enlaceDescargaRecibo.classList.remove('oculto');
+    }, 'image/png');
+  });
+
+  function cerrarModalRecibo() {
+    fondoRecibo.classList.add('oculto');
+    enlaceDescargaRecibo.classList.add('oculto');
+    reciboContenidoEl.innerHTML = '';
+  }
+
+  botonCerrarRecibo.addEventListener('click', cerrarModalRecibo);
+  botonCerrarReciboX.addEventListener('click', cerrarModalRecibo);
 
   await cargarDatos();
 });
