@@ -470,8 +470,13 @@ button, input, select {
 
 .venta-grilla {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px;
+  /* Dejar espacio para hacer scroll de la grilla sin perder de vista el
+     carrito, que siempre queda fijo a la par (ver .venta-carrito). */
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .tarjeta-venta-producto {
@@ -519,7 +524,7 @@ button, input, select {
 }
 
 .venta-carrito {
-  width: 360px;
+  width: 320px;
   flex-shrink: 0;
   background: var(--color-superficie);
   border-radius: var(--radio);
@@ -724,7 +729,12 @@ button, input, select {
   text-decoration: none;
 }
 
-@media (max-width: 900px) {
+/* El iPad (dispositivo objetivo de esta app) nunca baja de 744px de ancho
+   ni en vertical, así que este apilado solo debería afectar a un celular
+   angosto usado por accidente — el carrito se mantiene siempre a la par
+   de la grilla de productos en el iPad, sin importar cuántos productos
+   haya en el catálogo. */
+@media (max-width: 620px) {
   .venta-layout {
     flex-direction: column;
   }
@@ -732,6 +742,11 @@ button, input, select {
   .venta-carrito {
     width: 100%;
     position: static;
+  }
+
+  .venta-grilla {
+    max-height: none;
+    overflow-y: visible;
   }
 
   .carrito-lista {
@@ -1410,8 +1425,8 @@ button, input, select {
 
 .inicio-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 22px;
 }
 
 .inicio-boton {
@@ -1419,14 +1434,14 @@ button, input, select {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 32px 12px;
+  gap: 14px;
+  padding: 44px 16px;
   border-radius: var(--radio);
   box-shadow: var(--sombra);
   text-decoration: none;
   color: #fff;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 19px;
   touch-action: manipulation;
   transition: transform 0.08s ease;
 }
@@ -1436,7 +1451,7 @@ button, input, select {
 }
 
 .inicio-boton__icono {
-  font-size: 44px;
+  font-size: 58px;
   line-height: 1;
 }
 
@@ -1684,6 +1699,17 @@ button, input, select {
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.aviso-respaldo__cerrar {
+  background: transparent;
+  border: none;
+  color: var(--color-error, #b3261e);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
 }
 
 /* ---------- Resumen de hoy (pantalla de Inicio) ---------- */

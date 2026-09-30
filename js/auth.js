@@ -130,7 +130,17 @@ const Auth = {
 
   obtenerSesion() {
     const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch (err) {
+      // Si el valor guardado llegara a corromperse, esto se llama al
+      // inicio de CADA página de la app — sin este try/catch, un solo
+      // valor inválido rompería la app entera en todas las pantallas en
+      // vez de simplemente pedir iniciar sesión de nuevo.
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
   },
 
   requerirSesion(redirectA = 'index.html') {

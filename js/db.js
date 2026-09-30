@@ -16,12 +16,17 @@ const STORES = {
   CLIENTES: 'clientes',
 };
 
-let dbInstance = null;
+let dbPromise = null;
 
 function abrirDB() {
-  if (dbInstance) return Promise.resolve(dbInstance);
+  // Se cachea la PROMESA (no el resultado ya resuelto): si varias llamadas
+  // llegan antes de que termine de abrir la conexión —muy común, ya que
+  // casi cada página dispara varias peticiones en paralelo al cargar—,
+  // todas deben compartir la misma apertura en vez de crear conexiones
+  // duplicadas a la base de datos.
+  if (dbPromise) return dbPromise;
 
-  return new Promise((resolve, reject) => {
+  dbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = (event) => {
@@ -101,28 +106,19 @@ function abrirDB() {
     };
 
     request.onsuccess = (event) => {
-      dbInstance = event.target.result;
-      resolve(dbInstance);
+      resolve(event.target.result);
     };
 
     request.onerror = (event) => {
+      // Si falla, se limpia la promesa cacheada: de lo contrario, un fallo
+      // pasajero (ej. el usuario negó el permiso una vez) dejaría a la app
+      // rechazando la conexión para siempre, incluso en intentos futuros.
+      dbPromise = null;
       reject(event.target.error);
     };
   });
-}
 
-function ejecutarEnStore(storeName, modo, callback) {
-  return abrirDB().then((db) => {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, modo);
-      const store = tx.objectStore(storeName);
-      const result = callback(store);
-
-      tx.oncomplete = () => resolve(result);
-      tx.onerror = () => reject(tx.error);
-      tx.onabort = () => reject(tx.error);
-    });
-  });
+  return dbPromise;
 }
 
 function promesaDeRequest(request) {

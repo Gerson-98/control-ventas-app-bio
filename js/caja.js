@@ -86,6 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // Evita que dos toques rápidos en "Abrir caja" creen dos cajas
+    // abiertas al mismo tiempo antes de que termine el primer guardado.
+    const botonAbrir = formAbrirCaja.querySelector('button[type="submit"]');
+    if (botonAbrir.disabled) return;
+    botonAbrir.disabled = true;
+
     try {
       await DB.agregar(DB.STORES.CAJAS, {
         usuarioId: sesion.id,
@@ -101,6 +107,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await cargarEstadoCaja();
     } catch (err) {
       mostrarError(errorAbrirCaja, 'No se pudo abrir la caja.');
+    } finally {
+      botonAbrir.disabled = false;
     }
   });
 
@@ -181,6 +189,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   botonConfirmarCierre.addEventListener('click', async () => {
     if (!cajaActual || !calculoCierrePendiente) return;
+    if (botonConfirmarCierre.disabled) return;
+    botonConfirmarCierre.disabled = true;
 
     try {
       const cajaActualizada = {
@@ -199,6 +209,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await cargarEstadoCaja();
     } catch (err) {
       mostrarError(errorCerrarCaja, 'No se pudo cerrar la caja.');
+    } finally {
+      botonConfirmarCierre.disabled = false;
     }
   });
 
@@ -235,6 +247,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const botonRegistrar = formAgregarMovimiento.querySelector('button[type="submit"]');
+    if (botonRegistrar.disabled) return;
+    botonRegistrar.disabled = true;
+
     try {
       await DB.agregar(DB.STORES.GASTOS, {
         fecha: Date.now(),
@@ -250,6 +266,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await cargarEstadoCaja();
     } catch (err) {
       mostrarError(errorAgregarMovimiento, 'No se pudo registrar el movimiento.');
+    } finally {
+      botonRegistrar.disabled = false;
     }
   });
 

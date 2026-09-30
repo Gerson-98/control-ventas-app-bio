@@ -92,6 +92,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const idExistente = campoId.value ? Number(campoId.value) : null;
 
+    const botonGuardar = formCliente.querySelector('button[type="submit"]');
+    if (botonGuardar.disabled) return;
+    botonGuardar.disabled = true;
+
     try {
       if (idExistente) {
         const cliente = await DB.obtenerPorId(DB.STORES.CLIENTES, idExistente);
@@ -117,6 +121,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await cargarClientes();
     } catch (err) {
       mostrarErrorCliente('No se pudo guardar el cliente.');
+    } finally {
+      botonGuardar.disabled = false;
     }
   });
 

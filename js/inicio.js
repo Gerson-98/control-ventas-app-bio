@@ -26,19 +26,34 @@ function mostrarAvisoRespaldoSiHaceFalta() {
   const DIAS_LIMITE = 7;
   const avisoEl = document.getElementById('aviso-respaldo');
   const textoEl = document.getElementById('aviso-respaldo-texto');
+  const botonCerrarEl = document.getElementById('boton-cerrar-aviso-respaldo');
   const ultimoRespaldoTexto = localStorage.getItem('ventpro_ultimo_respaldo');
 
-  if (!ultimoRespaldoTexto) {
-    textoEl.textContent = 'Todavía no has hecho ningún respaldo de tus datos. Hazlo cada semana para no perder tu información.';
-    avisoEl.classList.remove('oculto');
+  const ocultoHastaTexto = localStorage.getItem('ventpro_aviso_respaldo_oculto_hasta');
+  if (ocultoHastaTexto && Date.now() < Number(ocultoHastaTexto)) {
     return;
   }
 
-  const diasDesdeRespaldo = Math.floor((Date.now() - Number(ultimoRespaldoTexto)) / (1000 * 60 * 60 * 24));
-  if (diasDesdeRespaldo >= DIAS_LIMITE) {
-    textoEl.textContent = `Tu último respaldo fue hace ${diasDesdeRespaldo} días. Es buena idea hacer uno nuevo.`;
-    avisoEl.classList.remove('oculto');
+  let debeMostrarse = false;
+  if (!ultimoRespaldoTexto) {
+    textoEl.textContent = 'Todavía no has hecho ningún respaldo de tus datos. Hazlo cada semana para no perder tu información.';
+    debeMostrarse = true;
+  } else {
+    const diasDesdeRespaldo = Math.floor((Date.now() - Number(ultimoRespaldoTexto)) / (1000 * 60 * 60 * 24));
+    if (diasDesdeRespaldo >= DIAS_LIMITE) {
+      textoEl.textContent = `Tu último respaldo fue hace ${diasDesdeRespaldo} días. Es buena idea hacer uno nuevo.`;
+      debeMostrarse = true;
+    }
   }
+
+  if (!debeMostrarse) return;
+
+  avisoEl.classList.remove('oculto');
+  botonCerrarEl.addEventListener('click', () => {
+    avisoEl.classList.add('oculto');
+    const unDiaEnMs = 24 * 60 * 60 * 1000;
+    localStorage.setItem('ventpro_aviso_respaldo_oculto_hasta', String(Date.now() + unDiaEnMs));
+  });
 }
 
 function formatearMoneda(monto) {

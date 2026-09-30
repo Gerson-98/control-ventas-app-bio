@@ -139,19 +139,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const nuevoId = await DB.agregar(DB.STORES.CLIENTES, {
-      nombre,
-      telefono,
-      telefonoAlterno: '',
-      direccion,
-      notas: '',
-      creadoEn: Date.now(),
-    });
+    if (botonGuardarNuevoClienteEl.disabled) return;
+    botonGuardarNuevoClienteEl.disabled = true;
 
-    await cargarClientes();
-    ventaClienteSelectEl.value = String(nuevoId);
-    ventaClienteSelectEl.dispatchEvent(new Event('change'));
-    fondoNuevoClienteEl.classList.add('oculto');
+    try {
+      const nuevoId = await DB.agregar(DB.STORES.CLIENTES, {
+        nombre,
+        telefono,
+        telefonoAlterno: '',
+        direccion,
+        notas: '',
+        creadoEn: Date.now(),
+      });
+
+      await cargarClientes();
+      ventaClienteSelectEl.value = String(nuevoId);
+      ventaClienteSelectEl.dispatchEvent(new Event('change'));
+      fondoNuevoClienteEl.classList.add('oculto');
+    } catch (err) {
+      errorNuevoClienteEl.textContent = 'No se pudo guardar el cliente.';
+      errorNuevoClienteEl.classList.add('visible');
+    } finally {
+      botonGuardarNuevoClienteEl.disabled = false;
+    }
   });
 
   function obtenerClienteSeleccionado() {

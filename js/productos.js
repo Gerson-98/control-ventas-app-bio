@@ -156,6 +156,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       costo = isNaN(costoIngresado) || costoIngresado < 0 ? null : costoIngresado;
     }
 
+    const botonGuardar = formProducto.querySelector('button[type="submit"]');
+    if (botonGuardar.disabled) return;
+    botonGuardar.disabled = true;
+
     try {
       if (idExistente) {
         const producto = await DB.obtenerPorId(DB.STORES.PRODUCTOS, idExistente);
@@ -188,6 +192,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await cargarProductos();
     } catch (err) {
       mostrarErrorProducto('No se pudo guardar el producto.');
+    } finally {
+      botonGuardar.disabled = false;
     }
   });
 

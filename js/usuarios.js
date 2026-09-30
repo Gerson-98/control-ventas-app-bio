@@ -85,6 +85,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
+    const botonGuardar = formUsuario.querySelector('button[type="submit"]');
+    if (botonGuardar.disabled) return;
+    botonGuardar.disabled = true;
+
     try {
       if (idExistente) {
         const cambios = { nombre, usuario, rol, activo: campoActivo.checked };
@@ -98,6 +102,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await cargarUsuarios();
     } catch (err) {
       mostrarErrorUsuario(err.message || 'No se pudo guardar el usuario.');
+    } finally {
+      botonGuardar.disabled = false;
     }
   });
 

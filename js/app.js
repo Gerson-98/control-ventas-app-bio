@@ -64,12 +64,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const botonSetup = formSetup.querySelector('button[type="submit"]');
+    if (botonSetup && botonSetup.disabled) return;
+    if (botonSetup) botonSetup.disabled = true;
+
     try {
       await Auth.crearUsuario({ nombre, usuario, password, rol: 'administrador' });
       await Auth.login(usuario, password);
       window.location.href = 'pages/inicio.html';
     } catch (err) {
       mostrarError(errorSetup, err.message);
+      if (botonSetup) botonSetup.disabled = false;
     }
   });
 
