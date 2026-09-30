@@ -20,9 +20,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const reciboContenidoEl = document.getElementById('recibo-contenido');
   const reciboCanvas = document.getElementById('recibo-canvas');
   const botonCompartirRecibo = document.getElementById('boton-compartir-recibo');
+  const botonImprimirDirecto = document.getElementById('boton-imprimir-directo');
   const botonCerrarRecibo = document.getElementById('boton-cerrar-recibo');
   const botonCerrarReciboX = document.getElementById('boton-cerrar-recibo-x');
   const enlaceDescargaRecibo = document.getElementById('enlace-descarga-recibo');
+  let ultimaVentaParaRecibo = null;
 
   const cuerpoTablaEl = document.getElementById('cuerpo-tabla-reportes');
   const estadoVacioEl = document.getElementById('estado-vacio-reportes');
@@ -594,6 +596,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function mostrarRecibo(venta) {
+    ultimaVentaParaRecibo = venta;
     const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', {
       dateStyle: 'medium',
       timeStyle: 'short',
@@ -822,6 +825,67 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     return recortado + '…';
   }
+
+  // ---------- Impresión directa vía app "Bluetooth Print" (esquema thermer://) ----------
+  function construirEntradasThermer(venta) {
+    const entradas = [];
+    const texto = (content, align = 0, bold = 0) => entradas.push({ type: 0, content, bold, align });
+    const linea = () => texto('--------------------------------');
+
+    texto('Fruteria Los Bionicos', 1, 1);
+    texto(new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' }), 1);
+    texto(`Recibo #${venta.numeroRecibo}`, 1);
+    texto(`Cajero: ${venta.cajero}`, 1);
+    linea();
+
+    venta.lineas.forEach((l) => {
+      const extra = l.extra || 0;
+      const subtotal = (l.precio + extra) * l.cantidad;
+      texto(`${l.cantidad} x ${l.nombre} .... ${formatearPrecio(subtotal)}`);
+      if (extra > 0) texto(`  (${formatearPrecio(l.precio)} + ${formatearPrecio(extra)} extra)`);
+      if (l.nota) texto(`  Nota: ${l.nota}`);
+    });
+
+    if (venta.esDomicilio && venta.costoEnvio > 0) {
+      texto(`Envio a domicilio .... ${formatearPrecio(venta.costoEnvio)}`);
+    }
+
+    linea();
+    texto(`Total: ${formatearPrecio(venta.total)}`, 0, 1);
+    texto(`Metodo de pago: ${etiquetaMetodoPagoRecibo(venta.metodoPago)}`);
+
+    if (venta.esDomicilio) {
+      linea();
+      texto('Entrega a domicilio', 0, 1);
+      if (venta.clienteNombre) texto(venta.clienteNombre);
+      texto(venta.clienteTelefono);
+      texto(venta.clienteDireccion);
+      if (venta.telefonoAlterno) texto(`Tel. alterno: ${venta.telefonoAlterno}`);
+      if (venta.notasEntrega) texto(venta.notasEntrega);
+    }
+
+    linea();
+    texto('Gracias por su compra!', 1);
+    texto(' ');
+    texto(' ');
+
+    return entradas;
+  }
+
+  function imprimirConThermer(venta) {
+    const entradas = construirEntradasThermer(venta);
+    const objetoConClaves = {};
+    entradas.forEach((entrada, indice) => {
+      objetoConClaves[indice] = entrada;
+    });
+    const datosCodificados = encodeURIComponent(JSON.stringify(objetoConClaves));
+    window.location.href = `thermer://?data=${datosCodificados}`;
+  }
+
+  botonImprimirDirecto.addEventListener('click', () => {
+    if (!ultimaVentaParaRecibo) return;
+    imprimirConThermer(ultimaVentaParaRecibo);
+  });
 
   botonCompartirRecibo.addEventListener('click', async () => {
     enlaceDescargaRecibo.classList.add('oculto');
