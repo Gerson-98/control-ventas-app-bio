@@ -870,8 +870,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     linea();
     texto('Gracias por su compra!', 1);
-    texto(' ');
-    texto(' ');
+    // Líneas en blanco de "colchón": el corte automático de la impresora
+    // se adelanta y corta antes de que el cabezal termine de imprimir
+    // físicamente las últimas líneas si no hay suficiente margen.
+    for (let i = 0; i < 6; i += 1) texto(' ');
 
     return entradas;
   }

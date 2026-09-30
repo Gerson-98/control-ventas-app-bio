@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (Auth.esAdministrador(sesion)) {
     document.getElementById('boton-inicio-respaldo').classList.remove('oculto');
     document.getElementById('boton-inicio-usuarios').classList.remove('oculto');
+    mostrarAvisoRespaldoSiHaceFalta();
   }
 
   document.getElementById('boton-salir').addEventListener('click', () => {
@@ -20,6 +21,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await cargarResumenHoy();
 });
+
+function mostrarAvisoRespaldoSiHaceFalta() {
+  const DIAS_LIMITE = 7;
+  const avisoEl = document.getElementById('aviso-respaldo');
+  const textoEl = document.getElementById('aviso-respaldo-texto');
+  const ultimoRespaldoTexto = localStorage.getItem('ventpro_ultimo_respaldo');
+
+  if (!ultimoRespaldoTexto) {
+    textoEl.textContent = 'Todavía no has hecho ningún respaldo de tus datos. Hazlo cada semana para no perder tu información.';
+    avisoEl.classList.remove('oculto');
+    return;
+  }
+
+  const diasDesdeRespaldo = Math.floor((Date.now() - Number(ultimoRespaldoTexto)) / (1000 * 60 * 60 * 24));
+  if (diasDesdeRespaldo >= DIAS_LIMITE) {
+    textoEl.textContent = `Tu último respaldo fue hace ${diasDesdeRespaldo} días. Es buena idea hacer uno nuevo.`;
+    avisoEl.classList.remove('oculto');
+  }
+}
 
 function formatearMoneda(monto) {
   return 'Q ' + monto.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

@@ -866,8 +866,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     linea();
     texto('Gracias por su compra!', 1);
-    texto(' ');
-    texto(' ');
+    for (let i = 0; i < 6; i += 1) texto(' ');
 
     return entradas;
   }

@@ -172,6 +172,8 @@ async function exportarRespaldo() {
   document.body.removeChild(enlace);
 
   URL.revokeObjectURL(url);
+
+  localStorage.setItem('ventpro_ultimo_respaldo', String(Date.now()));
 }
 
 function nombreFechaHoy() {

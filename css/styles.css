@@ -1650,6 +1650,42 @@ button, input, select {
   background: var(--color-primario-oscuro);
 }
 
+/* ---------- Aviso de respaldo (pantalla de Inicio) ---------- */
+
+.aviso-respaldo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: var(--color-error-fondo, #fde8e8);
+  color: var(--color-error, #b3261e);
+  border-radius: var(--radio);
+}
+
+.aviso-respaldo__icono {
+  font-size: 20px;
+}
+
+.aviso-respaldo__texto {
+  flex: 1;
+  min-width: 200px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.aviso-respaldo__boton {
+  background: var(--color-error, #b3261e);
+  color: #fff;
+  border-radius: var(--radio);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 /* ---------- Resumen de hoy (pantalla de Inicio) ---------- */
 
 .resumen-hoy-inicio {
