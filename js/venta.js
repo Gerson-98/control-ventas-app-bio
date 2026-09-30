@@ -942,8 +942,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   function imprimirConThermer(venta) {
     const entradas = construirEntradasThermer(venta);
     const objetoConClaves = {};
+    // La app ordena las claves como TEXTO, no como número: con 10 o más
+    // líneas, la clave "10" queda alfabéticamente entre "1" y "2",
+    // imprimiendo esa línea fuera de orden. Se rellenan con ceros a la
+    // izquierda (ej. "00", "01" ... "10") para que el orden alfabético
+    // coincida siempre con el orden real de las líneas del recibo.
+    const digitos = String(entradas.length - 1).length;
     entradas.forEach((entrada, indice) => {
-      objetoConClaves[indice] = entrada;
+      const clave = String(indice).padStart(digitos, '0');
+      objetoConClaves[clave] = entrada;
     });
     const datosCodificados = encodeURIComponent(JSON.stringify(objetoConClaves));
     window.location.href = `thermer://?data=${datosCodificados}`;
