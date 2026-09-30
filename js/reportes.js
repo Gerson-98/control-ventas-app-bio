@@ -673,7 +673,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tieneEnvio) alturaFija += alturaLinea;
     if (venta.esDomicilio) alturaFija += lineasDomicilio * 18 + 20;
     const cantidadNotas = venta.lineas.filter((l) => l.nota).length;
-    const alto = alturaFija + venta.lineas.length * alturaLinea + cantidadNotas * alturaNota;
+    const margenInferior = 70;
+    const alto = alturaFija + venta.lineas.length * alturaLinea + cantidadNotas * alturaNota + margenInferior;
 
     const escalaImpresion = 1.5;
     reciboCanvas.width = ancho * escalaImpresion;

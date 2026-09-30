@@ -663,7 +663,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tieneEnvio) alturaFija += alturaLinea;
     if (venta.esDomicilio) alturaFija += lineasDomicilio * 18 + 20;
     const cantidadNotas = venta.lineas.filter((l) => l.nota).length;
-    const alto = alturaFija + venta.lineas.length * alturaLinea + cantidadNotas * alturaNota;
+    // Margen extra al final: sin esto, el corte automático de la impresora
+    // cae encima del último texto en vez de dejarlo completo antes de cortar.
+    const margenInferior = 70;
+    const alto = alturaFija + venta.lineas.length * alturaLinea + cantidadNotas * alturaNota + margenInferior;
 
     // Se dibuja a 1.5x y se escala el contexto (no las coordenadas de abajo)
     // para que la imagen final tenga ~576px de ancho — la resolución
