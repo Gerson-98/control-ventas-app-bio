@@ -827,46 +827,61 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ---------- Impresión directa vía app "Bluetooth Print" (esquema thermer://) ----------
+  // IMPORTANTE: la app recibe este contenido dentro de una URL
+  // (thermer://?data=...), y ese tipo de enlaces entre apps de iOS tiene un
+  // límite de tamaño bastante corto. Un recibo "normal" (una entrada de
+  // texto por línea) fácilmente pasa ese límite y la URL llega truncada:
+  // la impresora imprime solo hasta donde alcanzó y corta ahí mismo,
+  // pareciendo un corte prematuro pero en realidad es una URL incompleta.
+  // Por eso aquí se agrupan varias líneas dentro de una sola "entrada" de
+  // texto usando saltos de línea (<br />), que la app también soporta:
+  // mismo contenido, muchísimo menos texto de formato JSON de por medio.
+  const SEPARADOR_RECIBO = '------------------------';
+
   function construirEntradasThermer(venta) {
     const entradas = [];
-    const texto = (content, align = 0, bold = 0) => entradas.push({ type: 0, content, bold, align });
-    const linea = () => texto('--------------------------------');
+    const texto = (content, align = 0, bold = 0) => {
+      const entrada = { type: 0, content };
+      if (bold) entrada.bold = 1;
+      if (align) entrada.align = align;
+      entradas.push(entrada);
+    };
 
     texto('Fruteria Los Bionicos', 1, 1);
-    texto(new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' }), 1);
-    texto(`Recibo #${venta.numeroRecibo}`, 1);
-    texto(`Cajero: ${venta.cajero}`, 1);
-    linea();
+    const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
+    texto(`${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Cajero: ${venta.cajero}`, 1);
+    texto(SEPARADOR_RECIBO);
 
-    venta.lineas.forEach((l) => {
+    const lineasProductos = venta.lineas.map((l) => {
       const extra = l.extra || 0;
       const subtotal = (l.precio + extra) * l.cantidad;
-      texto(`${l.cantidad} x ${l.nombre} .... ${formatearPrecio(subtotal)}`);
-      if (extra > 0) texto(`  (${formatearPrecio(l.precio)} + ${formatearPrecio(extra)} extra)`);
-      if (l.nota) texto(`  Nota: ${l.nota}`);
+      let linea = `${l.cantidad} x ${l.nombre} .... ${formatearPrecio(subtotal)}`;
+      if (extra > 0) linea += `<br />  (${formatearPrecio(l.precio)} + ${formatearPrecio(extra)} extra)`;
+      if (l.nota) linea += `<br />  Nota: ${l.nota}`;
+      return linea;
     });
-
     if (venta.esDomicilio && venta.costoEnvio > 0) {
-      texto(`Envio a domicilio .... ${formatearPrecio(venta.costoEnvio)}`);
+      lineasProductos.push(`Envio a domicilio .... ${formatearPrecio(venta.costoEnvio)}`);
     }
+    texto(lineasProductos.join('<br />'));
+    texto(SEPARADOR_RECIBO);
 
-    linea();
     texto(`Total: ${formatearPrecio(venta.total)}`, 0, 1);
     texto(`Metodo de pago: ${etiquetaMetodoPagoRecibo(venta.metodoPago)}`);
 
     if (venta.esDomicilio) {
-      linea();
-      texto('Entrega a domicilio', 0, 1);
-      if (venta.clienteNombre) texto(venta.clienteNombre);
-      texto(venta.clienteTelefono);
-      texto(venta.clienteDireccion);
-      if (venta.telefonoAlterno) texto(`Tel. alterno: ${venta.telefonoAlterno}`);
-      if (venta.notasEntrega) texto(venta.notasEntrega);
+      texto(SEPARADOR_RECIBO);
+      const lineasDomicilio = ['Entrega a domicilio'];
+      if (venta.clienteNombre) lineasDomicilio.push(venta.clienteNombre);
+      lineasDomicilio.push(venta.clienteTelefono);
+      lineasDomicilio.push(venta.clienteDireccion);
+      if (venta.telefonoAlterno) lineasDomicilio.push(`Tel. alterno: ${venta.telefonoAlterno}`);
+      if (venta.notasEntrega) lineasDomicilio.push(venta.notasEntrega);
+      texto(lineasDomicilio.join('<br />'));
     }
 
-    linea();
-    texto('Gracias por su compra!', 1);
-    for (let i = 0; i < 6; i += 1) texto(' ');
+    texto(SEPARADOR_RECIBO);
+    texto('Gracias por su compra!<br /> <br /> ', 1);
 
     return entradas;
   }
