@@ -1189,6 +1189,25 @@ button, input, select {
   font-size: 14px;
 }
 
+.resultado-vuelto {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radio);
+  font-weight: 800;
+  font-size: 16px;
+  text-align: center;
+}
+
+.resultado-vuelto--ok {
+  background: #e3f5e8;
+  color: #1e7a3d;
+}
+
+.resultado-vuelto--falta {
+  background: var(--color-error-fondo, #fde8e8);
+  color: var(--color-error, #b3261e);
+}
+
 .recibo-domicilio {
   background: var(--color-fondo);
   border-radius: 10px;

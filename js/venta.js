@@ -46,6 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const botonConfirmarEl = document.getElementById('boton-confirmar-venta');
 
   const chipsPago = Array.from(document.querySelectorAll('.chip-pago'));
+  const campoEfectivoRecibidoWrap = document.getElementById('campo-efectivo-recibido');
+  const efectivoRecibidoEl = document.getElementById('efectivo-recibido');
+  const resultadoVueltoEl = document.getElementById('resultado-vuelto');
 
   const fondoRecibo = document.getElementById('fondo-recibo');
   const reciboContenidoEl = document.getElementById('recibo-contenido');
@@ -448,6 +451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     carritoTotalMontoEl.textContent = formatearMoneda(calcularTotal());
+    if (metodoPago === 'efectivo') actualizarVuelto();
     ocultarError();
   }
 
@@ -472,8 +476,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       metodoPago = chip.dataset.metodo;
       chipsPago.forEach((c) => c.classList.toggle('activo', c === chip));
       ocultarError();
+
+      if (metodoPago === 'efectivo') {
+        campoEfectivoRecibidoWrap.classList.remove('oculto');
+        actualizarVuelto();
+      } else {
+        campoEfectivoRecibidoWrap.classList.add('oculto');
+        efectivoRecibidoEl.value = '';
+        resultadoVueltoEl.classList.add('oculto');
+      }
     });
   });
+
+  function actualizarVuelto() {
+    const recibido = parseFloat(efectivoRecibidoEl.value);
+    if (isNaN(recibido)) {
+      resultadoVueltoEl.classList.add('oculto');
+      return;
+    }
+    const total = calcularTotal();
+    const vuelto = recibido - total;
+
+    resultadoVueltoEl.classList.remove('oculto');
+    if (vuelto < 0) {
+      resultadoVueltoEl.textContent = `Falta ${formatearMoneda(Math.abs(vuelto))}`;
+      resultadoVueltoEl.classList.add('resultado-vuelto--falta');
+      resultadoVueltoEl.classList.remove('resultado-vuelto--ok');
+    } else {
+      resultadoVueltoEl.textContent = `Vuelto: ${formatearMoneda(vuelto)}`;
+      resultadoVueltoEl.classList.add('resultado-vuelto--ok');
+      resultadoVueltoEl.classList.remove('resultado-vuelto--falta');
+    }
+  }
+
+  efectivoRecibidoEl.addEventListener('input', actualizarVuelto);
 
   function etiquetaMetodoPago(metodo) {
     switch (metodo) {
@@ -585,6 +621,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       carrito = [];
       metodoPago = null;
       chipsPago.forEach((c) => c.classList.remove('activo'));
+      campoEfectivoRecibidoWrap.classList.add('oculto');
+      efectivoRecibidoEl.value = '';
+      resultadoVueltoEl.classList.add('oculto');
       limpiarCamposDomicilio();
       renderizarCarrito();
     } catch (err) {

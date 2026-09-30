@@ -136,6 +136,12 @@
             <button type="button" class="chip-pago" data-metodo="deposito">Depósito</button>
           </div>
 
+          <div id="campo-efectivo-recibido" class="campo campo--compacto oculto">
+            <label for="efectivo-recibido">¿Con cuánto paga?</label>
+            <input type="number" id="efectivo-recibido" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+            <div id="resultado-vuelto" class="resultado-vuelto oculto"></div>
+          </div>
+
           <div class="mensaje-error" id="venta-error"></div>
 
           <button type="button" class="boton boton-primario" id="boton-confirmar-venta">
