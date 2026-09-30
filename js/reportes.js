@@ -836,7 +836,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Por eso aquí se agrupan varias líneas dentro de una sola "entrada" de
   // texto usando saltos de línea (<br />), que la app también soporta:
   // mismo contenido, muchísimo menos texto de formato JSON de por medio.
-  const SEPARADOR_RECIBO = '------------------------';
+  const SEPARADOR_RECIBO = '........................';
 
   function construirEntradasThermer(venta) {
     const entradas = [];
@@ -881,7 +881,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     texto(SEPARADOR_RECIBO);
-    texto('Gracias por su compra!<br /> <br /> ', 1);
+    // Sin alinear al centro a propósito: la app agrupa todo el texto
+    // centrado junto al encabezado, imprimiéndolo al principio del ticket
+    // en vez de al final si se usa align=1 aquí.
+    texto('Gracias por su compra!<br /> <br /> ');
 
     return entradas;
   }
