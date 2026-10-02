@@ -8,6 +8,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('nombre-usuario-activo').textContent = sesion.nombre;
 
+  if (typeof VERSION_SW !== 'undefined') {
+    document.getElementById('inicio-version').textContent = `Versión ${VERSION_SW}`;
+  }
+
   if (Auth.esAdministrador(sesion)) {
     document.getElementById('boton-inicio-respaldo').classList.remove('oculto');
     document.getElementById('boton-inicio-usuarios').classList.remove('oculto');

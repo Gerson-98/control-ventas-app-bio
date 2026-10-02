@@ -1684,6 +1684,13 @@ button, input, select {
   background: var(--color-primario-oscuro);
 }
 
+.inicio-version {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
 /* ---------- Aviso de respaldo (pantalla de Inicio) ---------- */
 
 .aviso-respaldo {
