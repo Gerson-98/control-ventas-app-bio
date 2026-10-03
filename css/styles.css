@@ -1684,6 +1684,67 @@ button, input, select {
   background: var(--color-primario-oscuro);
 }
 
+.pagos-electronicos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.pago-bloque {
+  background: var(--color-superficie);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 18px 20px;
+}
+
+.pago-bloque__cabecera {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+.pago-bloque__titulo {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.pago-bloque__total {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-primario);
+}
+
+.pago-bloque__cantidad,
+.pago-bloque__vacio {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+  margin: 0;
+}
+
+.pago-bancos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.pago-banco-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: var(--radio);
+  background: var(--color-fondo);
+  font-size: 13px;
+}
+
+.pagos-tabla-envoltorio {
+  overflow-x: auto;
+}
+
 .venta-cliente-telefono {
   display: block;
   margin-top: 4px;

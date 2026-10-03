@@ -373,7 +373,93 @@ document.addEventListener('DOMContentLoaded', async () => {
     await renderizarTabla();
   }
 
+  // ---------- Depósitos y tarjetas del periodo ----------
+
+  const pagosElectronicosEl = document.getElementById('pagos-electronicos');
+  const tituloPagosElectronicosEl = document.getElementById('titulo-pagos-electronicos');
+  let mapaClientes = new Map();
+
+  function renderizarBloquePagos(ventas, metodo, icono, titulo) {
+    const pagos = ventas.filter((v) => v.metodoPago === metodo).sort((a, b) => b.fecha - a.fecha);
+    const total = pagos.reduce((acc, v) => acc + (v.total || 0), 0);
+    const cantidad = pagos.length;
+
+    if (cantidad === 0) {
+      return `
+        <section class="pago-bloque">
+          <div class="pago-bloque__cabecera">
+            <span class="pago-bloque__titulo">${icono} ${titulo}</span>
+            <span class="pago-bloque__total">${formatearPrecio(0)}</span>
+          </div>
+          <p class="pago-bloque__vacio">No hubo pagos con ${titulo.toLowerCase()} en este periodo.</p>
+        </section>`;
+    }
+
+    const porBanco = new Map();
+    pagos.forEach((v) => {
+      const banco = v.bancoNombre || 'Sin banco';
+      const acumulado = porBanco.get(banco) || { cantidad: 0, total: 0 };
+      acumulado.cantidad += 1;
+      acumulado.total += v.total || 0;
+      porBanco.set(banco, acumulado);
+    });
+    const chipsBancos = Array.from(porBanco.entries())
+      .sort((a, b) => b[1].total - a[1].total)
+      .map(([banco, datos]) => `
+        <span class="pago-banco-chip">
+          <strong>${escaparHtml(banco)}</strong>
+          <span>${datos.cantidad} ${datos.cantidad === 1 ? 'pago' : 'pagos'} · ${formatearPrecio(datos.total)}</span>
+        </span>`)
+      .join('');
+
+    const etiquetaDato = metodo === 'deposito' ? 'Cuenta del cliente' : 'No. de transacción';
+    const filas = pagos.map((v) => {
+      const cliente = v.clienteNombre || (v.clienteId != null && mapaClientes.get(v.clienteId)) || '—';
+      const dato = (metodo === 'deposito' ? v.numeroCuenta : v.numeroTransaccion) || '—';
+      const fecha = new Date(v.fecha).toLocaleString('es-GT', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+      });
+      return `
+        <tr>
+          <td>${fecha}</td>
+          <td>${v.numeroRecibo}</td>
+          <td>${escaparHtml(cliente)}</td>
+          <td>${escaparHtml(v.bancoNombre || '—')}</td>
+          <td>${escaparHtml(dato)}</td>
+          <td>${formatearPrecio(v.total || 0)}</td>
+        </tr>`;
+    }).join('');
+
+    return `
+      <section class="pago-bloque">
+        <div class="pago-bloque__cabecera">
+          <span class="pago-bloque__titulo">${icono} ${titulo}</span>
+          <span class="pago-bloque__total">${formatearPrecio(total)}</span>
+          <span class="pago-bloque__cantidad">${cantidad} ${cantidad === 1 ? 'pago' : 'pagos'}</span>
+        </div>
+        <div class="pago-bancos">${chipsBancos}</div>
+        <div class="pagos-tabla-envoltorio">
+          <table class="tabla-reportes">
+            <thead>
+              <tr><th>Fecha y hora</th><th>Recibo</th><th>Cliente</th><th>Banco</th><th>${etiquetaDato}</th><th>Monto</th></tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+      </section>`;
+  }
+
+  function renderizarPagosElectronicos() {
+    const { etiqueta } = obtenerRangoFiltroActual();
+    tituloPagosElectronicosEl.textContent = `Depósitos y tarjetas ${etiqueta}`;
+    const ventas = obtenerVentasDelPeriodo();
+    pagosElectronicosEl.innerHTML =
+      renderizarBloquePagos(ventas, 'deposito', '🏦', 'Depósitos') +
+      renderizarBloquePagos(ventas, 'tarjeta', '💳', 'Tarjeta');
+  }
+
   async function renderizarTabla() {
+    renderizarPagosElectronicos();
     const ventasPeriodo = obtenerVentasDelPeriodoParaTabla().slice().sort((a, b) => b.fecha - a.fecha);
 
     cuerpoTablaEl.innerHTML = '';
@@ -552,6 +638,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function cargarDatos() {
     todasLasVentas = await DB.obtenerTodos(DB.STORES.VENTAS);
     ventasActivas = todasLasVentas.filter((v) => !v.cancelada);
+    try {
+      const clientes = await DB.obtenerTodos(DB.STORES.CLIENTES);
+      mapaClientes = new Map(clientes.map((c) => [c.id, c.nombre]));
+    } catch (err) {
+      mapaClientes = new Map();
+    }
     actualizarTarjetasResumen();
     actualizarResumenMetodosPago();
 
