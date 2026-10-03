@@ -85,11 +85,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (!telefono) {
-      mostrarErrorCliente('El teléfono es obligatorio.');
-      return;
-    }
-
     const idExistente = campoId.value ? Number(campoId.value) : null;
 
     const botonGuardar = formCliente.querySelector('button[type="submit"]');
@@ -139,7 +134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tituloModal.textContent = 'Editar cliente';
       campoId.value = cliente.id;
       campoNombre.value = cliente.nombre;
-      campoTelefono.value = cliente.telefono;
+      campoTelefono.value = cliente.telefono || '';
       campoTelefonoAlterno.value = cliente.telefonoAlterno || '';
       campoDireccion.value = cliente.direccion || '';
       campoNotas.value = cliente.notas || '';
@@ -196,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <span class="tarjeta-producto__miniatura tarjeta-producto__miniatura--vacia">👤</span>
         <div class="tarjeta-producto__info">
           <p class="tarjeta-producto__nombre">${escaparHtml(cliente.nombre)}</p>
-          <span class="tarjeta-cliente__telefono">${escaparHtml(cliente.telefono)}</span>
+          ${cliente.telefono ? `<span class="tarjeta-cliente__telefono">${escaparHtml(cliente.telefono)}</span>` : ''}
           ${cliente.direccion ? `<span class="tarjeta-cliente__direccion">${escaparHtml(cliente.direccion)}</span>` : ''}
         </div>
         <div class="tarjeta-producto__acciones">

@@ -7,7 +7,10 @@
 // Orden en el que se exportan/importan los stores. Al importar se respeta
 // este orden para mantener prolijas las relaciones entre stores (aunque
 // IndexedDB no impone claves foráneas).
-const ORDEN_STORES = ['usuarios', 'productos', 'clientes', 'cajas', 'ventas', 'detalle_venta', 'gastos'];
+const ORDEN_STORES = ['usuarios', 'productos', 'clientes', 'bancos', 'cajas', 'ventas', 'detalle_venta', 'gastos'];
+// Stores que todo respaldo debe traer; 'bancos' se agregó después, así que los
+// respaldos anteriores sin ese store siguen siendo válidos.
+const STORES_REQUERIDOS = ['usuarios', 'productos', 'clientes', 'cajas', 'ventas', 'detalle_venta', 'gastos'];
 
 document.addEventListener('DOMContentLoaded', async () => {
   const sesion = Auth.requerirAdmin('../index.html', 'inicio.html');
@@ -55,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const confirmado = window.confirm(
       'Esto va a BORRAR todos los datos actuales de la app (usuarios, ' +
-      'productos, clientes, ventas, cajas y gastos) y los va a reemplazar por los ' +
+      'productos, clientes, bancos, ventas, cajas y gastos) y los va a reemplazar por los ' +
       'del archivo elegido. Esta acción no se puede deshacer.\n\n' +
       '¿Seguro que quieres continuar?'
     );
@@ -101,6 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         usuarios: 'usuarios',
         productos: 'productos',
         clientes: 'clientes',
+        bancos: 'bancos',
         ventas: 'ventas',
         detalle_venta: 'renglones de detalle de venta',
         cajas: 'cajas',
@@ -190,7 +194,7 @@ function nombreFechaHoy() {
 function validarFormatoRespaldo(json) {
   if (!json || typeof json !== 'object') return false;
   if (!json.datos || typeof json.datos !== 'object') return false;
-  return ORDEN_STORES.every((store) => Array.isArray(json.datos[store]));
+  return STORES_REQUERIDOS.every((store) => Array.isArray(json.datos[store]));
 }
 
 /**

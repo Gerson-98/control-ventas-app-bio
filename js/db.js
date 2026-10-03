@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'VentProDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 const STORES = {
   USUARIOS: 'usuarios',
@@ -14,6 +14,7 @@ const STORES = {
   CAJAS: 'cajas',
   GASTOS: 'gastos',
   CLIENTES: 'clientes',
+  BANCOS: 'bancos',
 };
 
 let dbPromise = null;
@@ -102,6 +103,15 @@ function abrirDB() {
           autoIncrement: true,
         });
         clientes.createIndex('nombre', 'nombre', { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORES.BANCOS)) {
+        // Bancos para pagos con tarjeta o depósito/transferencia. { id, nombre }
+        const bancos = db.createObjectStore(STORES.BANCOS, {
+          keyPath: 'id',
+          autoIncrement: true,
+        });
+        bancos.createIndex('nombre', 'nombre', { unique: false });
       }
     };
 

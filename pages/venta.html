@@ -86,6 +86,7 @@
               </select>
               <button type="button" class="boton-mas-circular boton-mas-circular--chico" id="boton-nuevo-cliente-rapido" title="Agregar cliente nuevo">+</button>
             </div>
+            <small id="venta-cliente-telefono" class="venta-cliente-telefono oculto"></small>
           </div>
 
           <div class="entrega-toggle">
@@ -140,6 +141,26 @@
             <label for="efectivo-recibido">¿Con cuánto paga?</label>
             <input type="number" id="efectivo-recibido" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
             <div id="resultado-vuelto" class="resultado-vuelto oculto"></div>
+          </div>
+
+          <div id="campo-banco-pago" class="campo campo--compacto oculto">
+            <label for="venta-banco-select">🏦 Banco (opcional)</label>
+            <div class="fila-campo-mas-boton fila-campo-mas-boton--compacta">
+              <select id="venta-banco-select" class="select-compacto">
+                <option value="">— Sin especificar —</option>
+              </select>
+              <button type="button" class="boton-mas-circular boton-mas-circular--chico" id="boton-nuevo-banco" title="Agregar banco nuevo">+</button>
+            </div>
+          </div>
+
+          <div id="campo-cuenta-cliente" class="campo campo--compacto oculto">
+            <label for="venta-cuenta-cliente">No. de cuenta del cliente (opcional)</label>
+            <input type="text" id="venta-cuenta-cliente" inputmode="numeric" placeholder="Ej. 1234567890" />
+          </div>
+
+          <div id="campo-numero-transaccion" class="campo campo--compacto oculto">
+            <label for="venta-numero-transaccion">No. de transacción (opcional)</label>
+            <input type="text" id="venta-numero-transaccion" inputmode="numeric" placeholder="Ej. 123456" />
           </div>
 
           <div class="mensaje-error" id="venta-error"></div>

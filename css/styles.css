@@ -1684,6 +1684,18 @@ button, input, select {
   background: var(--color-primario-oscuro);
 }
 
+.venta-cliente-telefono {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.detalle-pago {
+  font-size: 11px;
+  color: var(--color-texto-suave);
+}
+
 .inicio-version {
   margin-top: 18px;
   text-align: center;

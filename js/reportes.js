@@ -330,6 +330,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     return nombre;
   }
 
+  function detallePagoHtml(venta) {
+    const partes = [];
+    if (venta.bancoNombre) partes.push(venta.bancoNombre);
+    if (venta.numeroCuenta) partes.push(`Cta. ${venta.numeroCuenta}`);
+    if (venta.numeroTransaccion) partes.push(`Trans. ${venta.numeroTransaccion}`);
+    if (partes.length === 0) return '';
+    return `<br /><small class="detalle-pago">${escaparHtml(partes.join(' · '))}</small>`;
+  }
+
   function escaparHtml(texto) {
     const div = document.createElement('div');
     div.textContent = texto;
@@ -410,7 +419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${venta.numeroRecibo}</td>
         <td>${fechaFormateada}</td>
         <td>${escaparHtml(nombreCajero)}</td>
-        <td>${etiquetaMetodo}</td>
+        <td>${etiquetaMetodo}${detallePagoHtml(venta)}</td>
         <td>${etiquetaEntrega}</td>
         <td>${etiquetaCliente}</td>
         <td>${formatearPrecio(venta.total || 0)}</td>

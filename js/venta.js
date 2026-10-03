@@ -95,9 +95,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     clientes.forEach((c) => {
       const opt = document.createElement('option');
       opt.value = String(c.id);
-      opt.textContent = c.nombre;
+      // El teléfono ayuda a distinguir clientes con el mismo nombre.
+      opt.textContent = c.telefono ? `${c.nombre} · ${c.telefono}` : c.nombre;
       ventaClienteSelectEl.appendChild(opt);
     });
+  }
+
+  const ventaClienteTelefonoEl = document.getElementById('venta-cliente-telefono');
+
+  function actualizarTelefonoClienteSeleccionado() {
+    const cliente = obtenerClienteSeleccionado();
+    if (cliente && cliente.telefono) {
+      ventaClienteTelefonoEl.textContent = `📞 ${cliente.telefono}`;
+      ventaClienteTelefonoEl.classList.remove('oculto');
+    } else {
+      ventaClienteTelefonoEl.textContent = '';
+      ventaClienteTelefonoEl.classList.add('oculto');
+    }
   }
 
   // ---------- Modal rápido: nuevo cliente desde Vender ----------
@@ -186,9 +200,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       domicilioDireccionEl.value = cliente.direccion || '';
       if (cliente.telefonoAlterno) domicilioTelefonoAlternoEl.value = cliente.telefonoAlterno;
 
-      domicilioCamposClienteManualEl.classList.add('oculto');
+      // Si al cliente le falta teléfono o dirección (el teléfono ya es
+      // opcional), se muestran los campos para completarlos en esta venta.
+      const datosCompletos = !!(cliente.telefono && cliente.direccion);
+      domicilioCamposClienteManualEl.classList.toggle('oculto', datosCompletos);
       domicilioClienteInfoNombreEl.textContent = cliente.nombre;
-      domicilioClienteInfoEl.classList.remove('oculto');
+      domicilioClienteInfoEl.classList.toggle('oculto', !datosCompletos);
     } else {
       domicilioCamposClienteManualEl.classList.remove('oculto');
       domicilioClienteInfoEl.classList.add('oculto');
@@ -196,6 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   ventaClienteSelectEl.addEventListener('change', () => {
+    actualizarTelefonoClienteSeleccionado();
     actualizarCamposDomicilioSegunCliente();
   });
 
@@ -485,8 +503,78 @@ document.addEventListener('DOMContentLoaded', async () => {
         efectivoRecibidoEl.value = '';
         resultadoVueltoEl.classList.add('oculto');
       }
+
+      actualizarCamposDePagoElectronico();
     });
   });
+
+  // ---------- Banco / cuenta / transacción (tarjeta y depósito) ----------
+
+  const campoBancoPagoEl = document.getElementById('campo-banco-pago');
+  const bancoSelectEl = document.getElementById('venta-banco-select');
+  const botonNuevoBancoEl = document.getElementById('boton-nuevo-banco');
+  const campoCuentaClienteEl = document.getElementById('campo-cuenta-cliente');
+  const cuentaClienteEl = document.getElementById('venta-cuenta-cliente');
+  const campoNumeroTransaccionEl = document.getElementById('campo-numero-transaccion');
+  const numeroTransaccionEl = document.getElementById('venta-numero-transaccion');
+  let bancos = [];
+
+  async function cargarBancos(idASeleccionar) {
+    try {
+      bancos = await DB.obtenerTodos(DB.STORES.BANCOS);
+      bancos.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+    } catch (err) {
+      bancos = [];
+    }
+    bancoSelectEl.innerHTML = '<option value="">— Sin especificar —</option>';
+    bancos.forEach((b) => {
+      const opt = document.createElement('option');
+      opt.value = String(b.id);
+      opt.textContent = b.nombre;
+      bancoSelectEl.appendChild(opt);
+    });
+    if (idASeleccionar != null) bancoSelectEl.value = String(idASeleccionar);
+  }
+
+  function actualizarCamposDePagoElectronico() {
+    const esTarjeta = metodoPago === 'tarjeta';
+    const esDeposito = metodoPago === 'deposito';
+    campoBancoPagoEl.classList.toggle('oculto', !(esTarjeta || esDeposito));
+    campoNumeroTransaccionEl.classList.toggle('oculto', !esTarjeta);
+    campoCuentaClienteEl.classList.toggle('oculto', !esDeposito);
+    if (!esTarjeta) numeroTransaccionEl.value = '';
+    if (!esDeposito) cuentaClienteEl.value = '';
+    if (!esTarjeta && !esDeposito) bancoSelectEl.value = '';
+  }
+
+  botonNuevoBancoEl.addEventListener('click', async () => {
+    const nombreIngresado = window.prompt('Nombre del banco:');
+    const nombre = nombreIngresado ? nombreIngresado.trim() : '';
+    if (!nombre) return;
+
+    const existente = bancos.find((b) => (b.nombre || '').toLowerCase() === nombre.toLowerCase());
+    if (existente) {
+      bancoSelectEl.value = String(existente.id);
+      return;
+    }
+
+    try {
+      const nuevoId = await DB.agregar(DB.STORES.BANCOS, { nombre });
+      await cargarBancos(nuevoId);
+    } catch (err) {
+      mostrarError('No se pudo guardar el banco.');
+    }
+  });
+
+  function datosPagoParaGuardar() {
+    if (metodoPago !== 'tarjeta' && metodoPago !== 'deposito') return {};
+    const bancoId = bancoSelectEl.value ? parseInt(bancoSelectEl.value, 10) : null;
+    const banco = bancos.find((b) => b.id === bancoId);
+    const datos = { bancoId, bancoNombre: banco ? banco.nombre : '' };
+    if (metodoPago === 'deposito') datos.numeroCuenta = cuentaClienteEl.value.trim();
+    if (metodoPago === 'tarjeta') datos.numeroTransaccion = numeroTransaccionEl.value.trim();
+    return datos;
+  }
 
   function actualizarVuelto() {
     const recibido = parseFloat(efectivoRecibidoEl.value);
@@ -577,6 +665,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         metodoPago,
         total,
         cajaId: cajaActiva.id,
+        ...datosPagoParaGuardar(),
         esDomicilio,
         costoEnvio,
         clienteId,
@@ -624,6 +713,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       campoEfectivoRecibidoWrap.classList.add('oculto');
       efectivoRecibidoEl.value = '';
       resultadoVueltoEl.classList.add('oculto');
+      actualizarCamposDePagoElectronico();
       limpiarCamposDomicilio();
       renderizarCarrito();
     } catch (err) {
@@ -1007,5 +1097,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await cargarProductos();
   await cargarClientes();
+  await cargarBancos();
   renderizarCarrito();
 });

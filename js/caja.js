@@ -280,6 +280,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     return 'Q ' + numero.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  function detallePagoHtml(venta) {
+    const partes = [];
+    if (venta.bancoNombre) partes.push(venta.bancoNombre);
+    if (venta.numeroCuenta) partes.push(`Cta. ${venta.numeroCuenta}`);
+    if (venta.numeroTransaccion) partes.push(`Trans. ${venta.numeroTransaccion}`);
+    if (partes.length === 0) return '';
+    return `<br /><small class="detalle-pago">${escaparHtml(partes.join(' · '))}</small>`;
+  }
+
   function escaparHtml(texto) {
     const div = document.createElement('div');
     div.textContent = texto;
@@ -423,7 +432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       fila.innerHTML = `
         <td>${escaparHtml(venta.numeroRecibo || '-')} ${etiquetaCancelada}</td>
         <td>${new Date(venta.fecha).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}</td>
-        <td>${metodo}</td>
+        <td>${metodo}${detallePagoHtml(venta)}</td>
         <td>${tipoVenta}</td>
         <td>${venta.clienteNombre ? escaparHtml(venta.clienteNombre) : '-'}</td>
         <td>${formatearMoneda(venta.total || 0)}</td>
