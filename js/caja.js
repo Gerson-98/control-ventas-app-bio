@@ -333,12 +333,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function calcularTotalesTurno(caja) {
     const ventasTurno = (await obtenerVentasDelTurno(caja)).filter((v) => !v.cancelada);
-    const totales = { efectivo: 0, tarjeta: 0, deposito: 0 };
+    const totales = { efectivo: 0, tarjeta: 0, deposito: 0, pedidosya: 0 };
 
     ventasTurno.forEach((venta) => {
       if (venta.metodoPago === 'efectivo') totales.efectivo += venta.total;
       else if (venta.metodoPago === 'tarjeta') totales.tarjeta += venta.total;
       else if (venta.metodoPago === 'deposito') totales.deposito += venta.total;
+      else if (venta.metodoPago === 'pedidosya') totales.pedidosya += venta.total;
     });
 
     return totales;
@@ -421,10 +422,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const fila = document.createElement('tr');
       if (venta.cancelada) fila.classList.add('fila-venta-cancelada');
 
-      const tipoVenta = venta.esDomicilio ? 'Domicilio' : 'Mostrador';
-      const metodo = venta.metodoPago
-        ? venta.metodoPago.charAt(0).toUpperCase() + venta.metodoPago.slice(1)
-        : '—';
+      const tipoVenta = venta.esPedidosYa ? 'Pedidos Ya' : venta.esDomicilio ? 'Domicilio' : 'Local';
+      const nombresMetodo = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', deposito: 'Depósito', pedidosya: 'Pedidos Ya' };
+      const metodo = nombresMetodo[venta.metodoPago] || '—';
       const etiquetaCancelada = venta.cancelada
         ? '<span class="etiqueta-venta-cancelada" title="Venta cancelada">Cancelada</span>'
         : '';
@@ -464,10 +464,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const efectivoEsperado =
       cajaActual.montoInicial + totales.efectivo - movimientos.gastos + movimientos.ingresos;
 
-    cajaTotalVentasEl.textContent = formatearMoneda(totales.efectivo + totales.tarjeta + totales.deposito);
+    cajaTotalVentasEl.textContent = formatearMoneda(totales.efectivo + totales.tarjeta + totales.deposito + totales.pedidosya);
     cajaTotalEfectivoEl.textContent = formatearMoneda(totales.efectivo);
     cajaTotalTarjetaEl.textContent = formatearMoneda(totales.tarjeta);
     cajaTotalDepositoEl.textContent = formatearMoneda(totales.deposito);
+    document.getElementById('caja-total-pedidosya').textContent = formatearMoneda(totales.pedidosya);
     cajaTotalGastosEl.textContent = '− ' + formatearMoneda(movimientos.gastos);
     cajaTotalIngresosEl.textContent = '+ ' + formatearMoneda(movimientos.ingresos);
     cajaEfectivoEsperadoEl.textContent = formatearMoneda(efectivoEsperado);
@@ -587,7 +588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       <div class="caja-resumen-item caja-resumen-item--total-ventas">
         <span class="caja-resumen-item__etiqueta">💰 Ventas totales del turno</span>
-        <span class="caja-resumen-item__valor">${formatearMoneda(totales.efectivo + totales.tarjeta + totales.deposito)}</span>
+        <span class="caja-resumen-item__valor">${formatearMoneda(totales.efectivo + totales.tarjeta + totales.deposito + totales.pedidosya)}</span>
       </div>
 
       <div class="caja-resumen-grid">
@@ -602,6 +603,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="caja-resumen-item">
           <span class="caja-resumen-item__etiqueta">🏦 Depósito/transferencia</span>
           <span class="caja-resumen-item__valor">${formatearMoneda(totales.deposito)}</span>
+        </div>
+        <div class="caja-resumen-item">
+          <span class="caja-resumen-item__etiqueta">🛍️ Pedidos Ya (se cobra a su cuenta)</span>
+          <span class="caja-resumen-item__valor">${formatearMoneda(totales.pedidosya)}</span>
         </div>
         <div class="caja-resumen-item">
           <span class="caja-resumen-item__etiqueta">Gastos del turno</span>

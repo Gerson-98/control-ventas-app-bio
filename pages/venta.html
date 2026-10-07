@@ -90,8 +90,17 @@
           </div>
 
           <div class="entrega-toggle">
-            <button type="button" class="chip-entrega activo" data-tipo="mostrador">🏬 Mostrador</button>
+            <button type="button" class="chip-entrega activo" data-tipo="mostrador">🏬 Local</button>
             <button type="button" class="chip-entrega" data-tipo="domicilio">🛵 A domicilio</button>
+            <button type="button" class="chip-entrega" data-tipo="pedidosya">🛍️ Pedidos Ya</button>
+          </div>
+
+          <div id="pedidosya-campos" class="domicilio-campos oculto">
+            <div class="campo campo--compacto">
+              <label for="pedidosya-nombre">Nombre del cliente (Pedidos Ya)</label>
+              <input type="text" id="pedidosya-nombre" placeholder="Nombre que viene en el pedido" />
+            </div>
+            <p class="nota-pedidosya">Esta venta se cobra a la cuenta de Pedidos Ya (no entra como efectivo, tarjeta ni depósito).</p>
           </div>
 
           <div id="domicilio-campos" class="domicilio-campos oculto">
@@ -116,13 +125,15 @@
               <label for="domicilio-costo-envio">Costo de envío (Q, opcional)</label>
               <input type="number" id="domicilio-costo-envio" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
             </div>
-            <div class="campo campo--compacto">
-              <label for="domicilio-telefono-alterno">Teléfono alterno (opcional)</label>
-              <input type="tel" id="domicilio-telefono-alterno" placeholder="Ej. 5555-5555" inputmode="tel" />
-            </div>
-            <div class="campo campo--compacto">
-              <label for="domicilio-notas">Referencia o nota (opcional)</label>
-              <textarea id="domicilio-notas" rows="2" placeholder="Ej. casa color celeste, portón negro"></textarea>
+            <div id="domicilio-extras-manual">
+              <div class="campo campo--compacto">
+                <label for="domicilio-telefono-alterno">Teléfono alterno (opcional)</label>
+                <input type="tel" id="domicilio-telefono-alterno" placeholder="Ej. 5555-5555" inputmode="tel" />
+              </div>
+              <div class="campo campo--compacto">
+                <label for="domicilio-notas">Referencia o nota (opcional)</label>
+                <textarea id="domicilio-notas" rows="2" placeholder="Ej. casa color celeste, portón negro"></textarea>
+              </div>
             </div>
           </div>
 
@@ -138,7 +149,14 @@
           </div>
 
           <div id="campo-efectivo-recibido" class="campo campo--compacto oculto">
-            <label for="efectivo-recibido">¿Con cuánto paga?</label>
+            <label for="efectivo-recibido">¿Con cuánto paga? (obligatorio)</label>
+            <div class="billetes-rapidos" id="billetes-rapidos">
+              <button type="button" class="chip-billete" data-monto="exacto">Exacto</button>
+              <button type="button" class="chip-billete" data-monto="20">Q20</button>
+              <button type="button" class="chip-billete" data-monto="50">Q50</button>
+              <button type="button" class="chip-billete" data-monto="100">Q100</button>
+              <button type="button" class="chip-billete" data-monto="200">Q200</button>
+            </div>
             <input type="number" id="efectivo-recibido" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
             <div id="resultado-vuelto" class="resultado-vuelto oculto"></div>
           </div>
@@ -179,8 +197,13 @@
     <div class="tarjeta-modal tarjeta-extra-linea">
       <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-extra-linea-x">✕</button>
       <h3 id="extra-linea-titulo">Ajustar línea</h3>
+      <div class="campo campo--compacto oculto" id="campo-extra-unidades">
+        <label for="extra-linea-unidades">¿A cuántas unidades aplica?</label>
+        <input type="number" id="extra-linea-unidades" min="1" step="1" inputmode="numeric" />
+        <small id="extra-linea-unidades-ayuda" class="venta-cliente-telefono"></small>
+      </div>
       <div class="campo campo--compacto">
-        <label for="extra-linea-monto">Cargo extra (Q)</label>
+        <label for="extra-linea-monto">Cargo extra por unidad (Q)</label>
         <input type="number" id="extra-linea-monto" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
       </div>
       <div class="campo campo--compacto">

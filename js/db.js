@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'VentProDB';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 const STORES = {
   USUARIOS: 'usuarios',
@@ -15,6 +15,7 @@ const STORES = {
   GASTOS: 'gastos',
   CLIENTES: 'clientes',
   BANCOS: 'bancos',
+  AJUSTES: 'ajustes',
 };
 
 let dbPromise = null;
@@ -112,6 +113,12 @@ function abrirDB() {
           autoIncrement: true,
         });
         bancos.createIndex('nombre', 'nombre', { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORES.AJUSTES)) {
+        // Datos del negocio configurables. Un solo registro (id 1):
+        // { id: 1, telefonoNegocio }
+        db.createObjectStore(STORES.AJUSTES, { keyPath: 'id' });
       }
     };
 

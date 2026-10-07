@@ -29,6 +29,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   const campoPasswordConfirmar = document.getElementById('usuario-password-confirmar');
   const campoActivo = document.getElementById('usuario-activo');
 
+  // ---------- Datos del negocio (teléfono del recibo) ----------
+  const campoTelefonoNegocio = document.getElementById('negocio-telefono');
+  const botonGuardarNegocio = document.getElementById('boton-guardar-negocio');
+  const errorNegocio = document.getElementById('error-negocio');
+  const exitoNegocio = document.getElementById('exito-negocio');
+
+  try {
+    const ajustes = await DB.obtenerPorId(DB.STORES.AJUSTES, 1);
+    campoTelefonoNegocio.value = ajustes && ajustes.telefonoNegocio ? ajustes.telefonoNegocio : '';
+  } catch (err) {
+    campoTelefonoNegocio.value = '';
+  }
+
+  botonGuardarNegocio.addEventListener('click', async () => {
+    if (botonGuardarNegocio.disabled) return;
+    botonGuardarNegocio.disabled = true;
+    errorNegocio.classList.remove('visible');
+    exitoNegocio.classList.add('oculto');
+    try {
+      await DB.actualizar(DB.STORES.AJUSTES, {
+        id: 1,
+        telefonoNegocio: campoTelefonoNegocio.value.trim(),
+      });
+      exitoNegocio.classList.remove('oculto');
+    } catch (err) {
+      errorNegocio.textContent = 'No se pudo guardar el teléfono.';
+      errorNegocio.classList.add('visible');
+    } finally {
+      botonGuardarNegocio.disabled = false;
+    }
+  });
+
   document.getElementById('boton-nuevo-usuario').addEventListener('click', () => {
     abrirModal();
   });

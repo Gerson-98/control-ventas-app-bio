@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return 'Q ' + monto.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  const etiquetasMetodoPago = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', deposito: 'Depósito' };
+  const etiquetasMetodoPago = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', deposito: 'Depósito', pedidosya: 'Pedidos Ya' };
 
   async function abrirHistorialCliente(cliente) {
     tituloHistorialCliente.textContent = `Ventas de ${cliente.nombre}`;
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const fecha = new Date(v.fecha).toLocaleString('es-GT', {
           day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
         });
-        const entrega = v.esDomicilio ? '🛵 Domicilio' : '🏬 Mostrador';
+        const entrega = v.esPedidosYa ? '🛍️ Pedidos Ya' : v.esDomicilio ? '🛵 Domicilio' : '🏬 Local';
         const metodo = etiquetasMetodoPago[v.metodoPago] || v.metodoPago || '—';
         const claseFila = v.cancelada ? 'fila-venta-cancelada' : '';
         const totalTexto = v.cancelada

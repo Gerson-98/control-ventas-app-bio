@@ -7,7 +7,7 @@
 // Orden en el que se exportan/importan los stores. Al importar se respeta
 // este orden para mantener prolijas las relaciones entre stores (aunque
 // IndexedDB no impone claves foráneas).
-const ORDEN_STORES = ['usuarios', 'productos', 'clientes', 'bancos', 'cajas', 'ventas', 'detalle_venta', 'gastos'];
+const ORDEN_STORES = ['usuarios', 'productos', 'clientes', 'bancos', 'ajustes', 'cajas', 'ventas', 'detalle_venta', 'gastos'];
 // Stores que todo respaldo debe traer; 'bancos' se agregó después, así que los
 // respaldos anteriores sin ese store siguen siendo válidos.
 const STORES_REQUERIDOS = ['usuarios', 'productos', 'clientes', 'cajas', 'ventas', 'detalle_venta', 'gastos'];
@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         productos: 'productos',
         clientes: 'clientes',
         bancos: 'bancos',
+        ajustes: 'ajustes',
         ventas: 'ventas',
         detalle_venta: 'renglones de detalle de venta',
         cajas: 'cajas',

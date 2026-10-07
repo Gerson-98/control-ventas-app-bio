@@ -40,6 +40,17 @@
     </header>
 
     <main class="app-main">
+      <div class="tarjeta-negocio">
+        <h3>🏪 Datos del negocio</h3>
+        <div class="campo campo--compacto">
+          <label for="negocio-telefono">Teléfono (se imprime en el recibo)</label>
+          <input type="tel" id="negocio-telefono" inputmode="tel" placeholder="Ej. 5555-1234" />
+        </div>
+        <div class="mensaje-error" id="error-negocio"></div>
+        <div class="mensaje-exito oculto" id="exito-negocio">Guardado.</div>
+        <button type="button" class="boton boton-primario boton-ancho-auto" id="boton-guardar-negocio">Guardar teléfono</button>
+      </div>
+
       <div class="app-main__header">
         <h2>Usuarios del sistema</h2>
         <button class="boton boton-primario boton-ancho-auto" id="boton-nuevo-usuario">

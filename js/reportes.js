@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     efectivo: 'Efectivo',
     tarjeta: 'Tarjeta',
     deposito: 'Depósito',
+    pedidosya: 'Pedidos Ya',
   };
 
   const cacheUsuarios = new Map();
@@ -216,15 +217,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function actualizarResumenMetodosPago() {
     const ventasHoy = filtrarPorRango(ventasActivas, inicioDeHoy(), finDeHoy());
-    const porMetodo = { efectivo: 0, tarjeta: 0, deposito: 0 };
+    const porMetodo = { efectivo: 0, tarjeta: 0, deposito: 0, pedidosya: 0 };
     ventasHoy.forEach((v) => {
       if (porMetodo[v.metodoPago] !== undefined) porMetodo[v.metodoPago] += v.total || 0;
     });
     document.getElementById('resumen-efectivo-total').textContent = formatearPrecio(porMetodo.efectivo);
     document.getElementById('resumen-tarjeta-total').textContent = formatearPrecio(porMetodo.tarjeta);
     document.getElementById('resumen-deposito-total').textContent = formatearPrecio(porMetodo.deposito);
+    document.getElementById('resumen-pedidosya-total').textContent = formatearPrecio(porMetodo.pedidosya);
   }
 
+  // La ganancia solo se calcula con productos que tienen un costo mayor a
+  // cero registrado. Un producto sin costo (vacío o 0) no aporta ganancia:
+  // así, si el negocio no usa costos, la ganancia es Q 0.00 en vez de
+  // mostrar la venta completa como si fuera ganancia.
   function calcularGananciaDelPeriodo() {
     const ventasPeriodo = obtenerVentasDelPeriodo();
     const idsVentas = new Set(ventasPeriodo.map((v) => v.id));
@@ -232,19 +238,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     todoElDetalle.forEach((linea) => {
       if (!idsVentas.has(linea.ventaId)) return;
       const costoUnitario = mapaCostoPorProducto.get(linea.productoId);
+      if (!(costoUnitario > 0)) return;
       const ingresoLinea = linea.subtotal || 0;
-      // Si el producto no tiene costo registrado, no se puede saber su
-      // ganancia real — se cuenta como 0 de costo (ganancia = todo el ingreso)
-      // en vez de inventar un número; el administrador puede completar los
-      // costos en Productos para que esta cifra sea exacta.
-      const costoLinea = costoUnitario != null ? costoUnitario * (linea.cantidad || 0) : 0;
-      ganancia += ingresoLinea - costoLinea;
-    });
-
-    // El cobro de envío a domicilio es ingreso casi puro (no hay costo de
-    // producto asociado), así que también cuenta como ganancia.
-    ventasPeriodo.forEach((v) => {
-      if (v.esDomicilio && v.costoEnvio) ganancia += v.costoEnvio;
+      ganancia += ingresoLinea - costoUnitario * (linea.cantidad || 0);
     });
     return ganancia;
   }
@@ -484,7 +480,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       const etiquetaMetodo = etiquetasMetodoPago[venta.metodoPago] ||
         (venta.metodoPago ? venta.metodoPago.charAt(0).toUpperCase() + venta.metodoPago.slice(1) : '—');
-      const etiquetaEntrega = venta.esDomicilio ? '🛵 Domicilio' : '🏬 Mostrador';
+      const etiquetaEntrega = venta.esPedidosYa
+        ? '🛍️ Pedidos Ya'
+        : venta.esDomicilio ? '🛵 Domicilio' : '🏬 Local';
       const etiquetaCliente = venta.clienteNombre && venta.clienteNombre.trim() !== ''
         ? escaparHtml(venta.clienteNombre)
         : '—';
@@ -669,7 +667,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     return etiquetasMetodoPago[metodo] || metodo || '—';
   }
 
+  let telefonoNegocio = '';
+
   async function abrirReciboDesdeHistorial(venta, nombreCajero) {
+    try {
+      const ajustes = await DB.obtenerPorId(DB.STORES.AJUSTES, 1);
+      telefonoNegocio = ajustes && ajustes.telefonoNegocio ? ajustes.telefonoNegocio : '';
+    } catch (err) {
+      telefonoNegocio = '';
+    }
+
     const detalle = await DB.obtenerPorIndice(DB.STORES.DETALLE_VENTA, 'ventaId', venta.id);
     const lineas = detalle.map((d) => ({
       nombre: d.nombreProducto,
@@ -688,6 +695,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       costoEnvio: venta.costoEnvio || 0,
       total: venta.total,
       esDomicilio: venta.esDomicilio,
+      esPedidosYa: !!venta.esPedidosYa,
+      telefonoNegocio,
       clienteNombre: venta.clienteNombre || '',
       clienteTelefono: venta.clienteTelefono || '',
       clienteDireccion: venta.clienteDireccion || '',
@@ -742,6 +751,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     reciboContenidoEl.innerHTML = `
       <h3 class="recibo-titulo">Frutería Los Biónicos</h3>
+      ${venta.telefonoNegocio ? `<p class="recibo-meta">Tel: ${escaparHtml(venta.telefonoNegocio)}</p>` : ''}
       <p class="recibo-meta">${fechaTexto}</p>
       <p class="recibo-meta">Recibo #${venta.numeroRecibo}</p>
       <p class="recibo-meta">Cajero: ${escaparHtml(venta.cajero)}</p>
@@ -755,6 +765,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
       <p class="recibo-metodo">Método de pago: ${etiquetaMetodoPagoRecibo(venta.metodoPago)}</p>
       ${domicilioHtml}
+      ${venta.esPedidosYa ? `<div class="recibo-domicilio"><strong>🛍️ Pedidos Ya</strong><div>Cliente: ${escaparHtml(venta.clienteNombre || '')}</div></div>` : ''}
       <p class="recibo-gracias">¡Gracias por su compra!</p>
     `;
 
@@ -776,6 +787,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let alturaFija = 220;
     if (tieneEnvio) alturaFija += alturaLinea;
     if (venta.esDomicilio) alturaFija += lineasDomicilio * 18 + 20;
+    if (venta.telefonoNegocio) alturaFija += 20;
+    if (venta.esPedidosYa) alturaFija += 44;
     const cantidadNotas = venta.lineas.filter((l) => l.nota).length;
     const margenInferior = 70;
     const alto = alturaFija + venta.lineas.length * alturaLinea + cantidadNotas * alturaNota + margenInferior;
@@ -797,6 +810,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     ctx.textAlign = 'center';
     ctx.fillText('Frutería Los Biónicos', ancho / 2, y);
     y += 30;
+
+    if (venta.telefonoNegocio) {
+      ctx.font = '13px sans-serif';
+      ctx.fillText(`Tel: ${venta.telefonoNegocio}`, ancho / 2, y);
+      y += 20;
+    }
 
     const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', {
       dateStyle: 'medium',
@@ -868,6 +887,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     ctx.textAlign = 'center';
     ctx.fillText(`Método de pago: ${etiquetaMetodoPagoRecibo(venta.metodoPago)}`, ancho / 2, y);
     y += 24;
+
+    if (venta.esPedidosYa) {
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('🛍️ Pedidos Ya', margenX, y);
+      y += 18;
+      ctx.font = '13px sans-serif';
+      ctx.fillText(recortarTexto(ctx, `Cliente: ${venta.clienteNombre || ''}`, ancho - margenX * 2), margenX, y);
+      y += 26;
+    }
 
     if (venta.esDomicilio) {
       ctx.textAlign = 'left';
@@ -950,7 +979,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     texto('Fruteria Los Bionicos', 1, 1);
     const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
-    texto(`${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Cajero: ${venta.cajero}`, 1);
+    const lineaTelefono = venta.telefonoNegocio ? `Tel: ${venta.telefonoNegocio}<br />` : '';
+    texto(`${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Cajero: ${venta.cajero}`, 1);
     texto(SEPARADOR_RECIBO);
 
     const lineasProductos = venta.lineas.map((l) => {
@@ -969,6 +999,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     texto(`Total: ${formatearPrecio(venta.total)}`, 0, 1);
     texto(`Metodo de pago: ${etiquetaMetodoPagoRecibo(venta.metodoPago)}`);
+
+    if (venta.esPedidosYa) {
+      texto(SEPARADOR_RECIBO);
+      texto(`Pedidos Ya<br />Cliente: ${venta.clienteNombre || ''}`);
+    }
 
     if (venta.esDomicilio) {
       texto(SEPARADOR_RECIBO);

@@ -61,8 +61,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let productos = [];
   let categoriaActiva = 'Todos';
-  let carrito = []; // { productoId, nombre, precio, cantidad, extra, nota }
+  let carrito = []; // { lineaId, productoId, nombre, precio, cantidad, extra, nota }
+  let siguienteLineaId = 1;
   let metodoPago = null;
+  let telefonoNegocio = '';
+
+  async function cargarAjustes() {
+    try {
+      const ajustes = await DB.obtenerPorId(DB.STORES.AJUSTES, 1);
+      telefonoNegocio = ajustes && ajustes.telefonoNegocio ? ajustes.telefonoNegocio : '';
+    } catch (err) {
+      telefonoNegocio = '';
+    }
+  }
   let ultimoReciboBlob = null;
   let urlsFotosGrilla = [];
   let clientes = [];
@@ -76,7 +87,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const domicilioCostoEnvioEl = document.getElementById('domicilio-costo-envio');
   const domicilioTelefonoAlternoEl = document.getElementById('domicilio-telefono-alterno');
   const domicilioNotasEl = document.getElementById('domicilio-notas');
+  const domicilioExtrasManualEl = document.getElementById('domicilio-extras-manual');
+  const pedidosYaCamposEl = document.getElementById('pedidosya-campos');
+  const pedidosYaNombreEl = document.getElementById('pedidosya-nombre');
+  const contenedorMetodoPagoEl = document.querySelector('.metodo-pago');
   let esDomicilio = false;
+  let esPedidosYa = false;
 
   // ---------- Cliente opcional ----------
   const ventaClienteSelectEl = document.getElementById('venta-cliente-select');
@@ -198,7 +214,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       domicilioNombreEl.value = cliente.nombre || '';
       domicilioTelefonoEl.value = cliente.telefono || '';
       domicilioDireccionEl.value = cliente.direccion || '';
-      if (cliente.telefonoAlterno) domicilioTelefonoAlternoEl.value = cliente.telefonoAlterno;
 
       // Si al cliente le falta teléfono o dirección (el teléfono ya es
       // opcional), se muestran los campos para completarlos en esta venta.
@@ -210,22 +225,51 @@ document.addEventListener('DOMContentLoaded', async () => {
       domicilioCamposClienteManualEl.classList.remove('oculto');
       domicilioClienteInfoEl.classList.add('oculto');
     }
+
+    // Con cliente elegido, teléfono alterno y referencias salen de su ficha
+    // en Clientes (sin pedirlos de nuevo en cada venta).
+    domicilioExtrasManualEl.classList.toggle('oculto', !!(cliente && esDomicilio));
   }
 
   ventaClienteSelectEl.addEventListener('change', () => {
     actualizarTelefonoClienteSeleccionado();
     actualizarCamposDomicilioSegunCliente();
+    const cliente = obtenerClienteSeleccionado();
+    if (esPedidosYa && cliente) pedidosYaNombreEl.value = cliente.nombre || '';
   });
 
   chipsEntrega.forEach((chip) => {
     chip.addEventListener('click', () => {
       esDomicilio = chip.dataset.tipo === 'domicilio';
+      esPedidosYa = chip.dataset.tipo === 'pedidosya';
       chipsEntrega.forEach((c) => c.classList.toggle('activo', c === chip));
       domicilioCamposEl.classList.toggle('oculto', !esDomicilio);
+      pedidosYaCamposEl.classList.toggle('oculto', !esPedidosYa);
       actualizarCamposDomicilioSegunCliente();
+      aplicarModoPedidosYa();
+      renderizarCarrito();
       ocultarError();
     });
   });
+
+  // Pedidos Ya se cobra a su propia cuenta: no se elige efectivo/tarjeta/
+  // depósito, y en caja y reportes va aparte.
+  function aplicarModoPedidosYa() {
+    if (esPedidosYa) {
+      metodoPago = 'pedidosya';
+      chipsPago.forEach((c) => c.classList.remove('activo'));
+      contenedorMetodoPagoEl.classList.add('oculto');
+      campoEfectivoRecibidoWrap.classList.add('oculto');
+      efectivoRecibidoEl.value = '';
+      resultadoVueltoEl.classList.add('oculto');
+      actualizarCamposDePagoElectronico();
+      const cliente = obtenerClienteSeleccionado();
+      if (cliente && !pedidosYaNombreEl.value) pedidosYaNombreEl.value = cliente.nombre || '';
+    } else {
+      contenedorMetodoPagoEl.classList.remove('oculto');
+      if (metodoPago === 'pedidosya') metodoPago = null;
+    }
+  }
 
   function obtenerCostoEnvio() {
     const valor = parseFloat(domicilioCostoEnvioEl.value);
@@ -336,11 +380,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ---------- Carrito ----------
 
   function agregarAlCarrito(producto) {
-    const linea = carrito.find((l) => l.productoId === producto.id);
+    // Solo se suma a la línea "normal" (sin extra ni nota) del producto:
+    // las líneas con extra son unidades distintas y no se mezclan.
+    const linea = carrito.find(
+      (l) => l.productoId === producto.id && !(l.extra > 0) && !l.nota
+    );
     if (linea) {
       linea.cantidad += 1;
     } else {
       carrito.push({
+        lineaId: siguienteLineaId++,
         productoId: producto.id,
         nombre: producto.nombre,
         precio: producto.precio,
@@ -359,19 +408,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   const extraLineaNotaEl = document.getElementById('extra-linea-nota');
   const botonGuardarExtraLineaEl = document.getElementById('boton-guardar-extra-linea');
   const botonCancelarExtraLineaEl = document.getElementById('boton-cancelar-extra-linea');
-  let productoIdEditandoExtra = null;
+  let lineaIdEditandoExtra = null;
+  const campoExtraUnidadesEl = document.getElementById('campo-extra-unidades');
+  const extraLineaUnidadesEl = document.getElementById('extra-linea-unidades');
+  const extraLineaUnidadesAyudaEl = document.getElementById('extra-linea-unidades-ayuda');
 
   function abrirModalExtra(linea) {
-    productoIdEditandoExtra = linea.productoId;
+    lineaIdEditandoExtra = linea.lineaId;
     extraLineaTituloEl.textContent = `Ajustar: ${linea.nombre}`;
     extraLineaMontoEl.value = linea.extra ? String(linea.extra) : '';
     extraLineaNotaEl.value = linea.nota || '';
+
+    // Con más de una unidad se puede aplicar el extra solo a algunas
+    // (ej. de 2 bionicos, uno con topping y otro normal).
+    if (linea.cantidad > 1) {
+      campoExtraUnidadesEl.classList.remove('oculto');
+      extraLineaUnidadesEl.max = String(linea.cantidad);
+      extraLineaUnidadesEl.value = String(linea.cantidad);
+      extraLineaUnidadesAyudaEl.textContent =
+        `Hay ${linea.cantidad} unidades. Las que no elijas quedan como están.`;
+    } else {
+      campoExtraUnidadesEl.classList.add('oculto');
+    }
     fondoExtraLineaEl.classList.remove('oculto');
   }
 
   function cerrarModalExtra() {
     fondoExtraLineaEl.classList.add('oculto');
-    productoIdEditandoExtra = null;
+    lineaIdEditandoExtra = null;
   }
 
   botonCancelarExtraLineaEl.addEventListener('click', cerrarModalExtra);
@@ -380,29 +444,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.target === fondoExtraLineaEl) cerrarModalExtra();
   });
 
+  // Une líneas "normales" (sin extra ni nota) del mismo producto.
+  function fusionarLineasNormales() {
+    const resultado = [];
+    carrito.forEach((linea) => {
+      const esNormal = !(linea.extra > 0) && !linea.nota;
+      const destino = esNormal
+        ? resultado.find((l) => l.productoId === linea.productoId && !(l.extra > 0) && !l.nota)
+        : null;
+      if (destino) destino.cantidad += linea.cantidad;
+      else resultado.push(linea);
+    });
+    carrito = resultado;
+  }
+
   botonGuardarExtraLineaEl.addEventListener('click', () => {
-    if (productoIdEditandoExtra == null) return;
-    const linea = carrito.find((l) => l.productoId === productoIdEditandoExtra);
-    if (!linea) return;
+    if (lineaIdEditandoExtra == null) return;
+    const indice = carrito.findIndex((l) => l.lineaId === lineaIdEditandoExtra);
+    if (indice === -1) return;
+    const linea = carrito[indice];
+
     const valorExtra = parseFloat(extraLineaMontoEl.value);
-    linea.extra = isNaN(valorExtra) || valorExtra < 0 ? 0 : valorExtra;
-    linea.nota = extraLineaNotaEl.value.trim();
+    const extra = isNaN(valorExtra) || valorExtra < 0 ? 0 : valorExtra;
+    const nota = extraLineaNotaEl.value.trim();
+
+    let unidades = linea.cantidad;
+    if (linea.cantidad > 1) {
+      const pedidas = parseInt(extraLineaUnidadesEl.value, 10);
+      if (!isNaN(pedidas)) unidades = Math.min(Math.max(pedidas, 1), linea.cantidad);
+    }
+
+    if (unidades < linea.cantidad) {
+      // Solo algunas unidades llevan el extra: se separan en otra línea.
+      if (extra > 0 || nota) {
+        linea.cantidad -= unidades;
+        carrito.splice(indice + 1, 0, {
+          lineaId: siguienteLineaId++,
+          productoId: linea.productoId,
+          nombre: linea.nombre,
+          precio: linea.precio,
+          cantidad: unidades,
+          extra,
+          nota,
+        });
+      }
+    } else {
+      linea.extra = extra;
+      linea.nota = nota;
+    }
+
+    fusionarLineasNormales();
     cerrarModalExtra();
     renderizarCarrito();
   });
 
-  function cambiarCantidad(productoId, delta) {
-    const linea = carrito.find((l) => l.productoId === productoId);
+  function cambiarCantidad(lineaId, delta) {
+    const linea = carrito.find((l) => l.lineaId === lineaId);
     if (!linea) return;
     linea.cantidad += delta;
     if (linea.cantidad <= 0) {
-      carrito = carrito.filter((l) => l.productoId !== productoId);
+      carrito = carrito.filter((l) => l.lineaId !== lineaId);
     }
     renderizarCarrito();
   }
 
-  function eliminarLinea(productoId) {
-    carrito = carrito.filter((l) => l.productoId !== productoId);
+  function eliminarLinea(lineaId) {
+    carrito = carrito.filter((l) => l.lineaId !== lineaId);
     renderizarCarrito();
   }
 
@@ -452,13 +559,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
 
         fila.querySelector('[data-accion="restar"]').addEventListener('click', () =>
-          cambiarCantidad(linea.productoId, -1)
+          cambiarCantidad(linea.lineaId, -1)
         );
         fila.querySelector('[data-accion="sumar"]').addEventListener('click', () =>
-          cambiarCantidad(linea.productoId, 1)
+          cambiarCantidad(linea.lineaId, 1)
         );
         fila.querySelector('.carrito-linea__eliminar').addEventListener('click', () =>
-          eliminarLinea(linea.productoId)
+          eliminarLinea(linea.lineaId)
         );
         fila.querySelector('.carrito-linea__extra-boton').addEventListener('click', () =>
           abrirModalExtra(linea)
@@ -481,8 +588,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     domicilioTelefonoAlternoEl.value = '';
     domicilioNotasEl.value = '';
     esDomicilio = false;
+    esPedidosYa = false;
+    pedidosYaNombreEl.value = '';
     chipsEntrega.forEach((c) => c.classList.toggle('activo', c.dataset.tipo === 'mostrador'));
     domicilioCamposEl.classList.add('oculto');
+    pedidosYaCamposEl.classList.add('oculto');
+    contenedorMetodoPagoEl.classList.remove('oculto');
     ventaClienteSelectEl.value = '';
     actualizarCamposDomicilioSegunCliente();
   }
@@ -599,6 +710,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   efectivoRecibidoEl.addEventListener('input', actualizarVuelto);
 
+  document.querySelectorAll('.chip-billete').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const monto = chip.dataset.monto === 'exacto' ? calcularTotal() : parseFloat(chip.dataset.monto);
+      efectivoRecibidoEl.value = String(Math.round(monto * 100) / 100);
+      actualizarVuelto();
+      ocultarError();
+    });
+  });
+
   function etiquetaMetodoPago(metodo) {
     switch (metodo) {
       case 'efectivo':
@@ -607,6 +727,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return 'Tarjeta';
       case 'deposito':
         return 'Depósito';
+      case 'pedidosya':
+        return 'Pedidos Ya';
       default:
         return '';
     }
@@ -633,11 +755,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    if (metodoPago === 'efectivo') {
+      const recibido = parseFloat(efectivoRecibidoEl.value);
+      if (isNaN(recibido)) {
+        mostrarError('Escribe con cuánto paga el cliente (o toca "Exacto").');
+        efectivoRecibidoEl.focus();
+        return;
+      }
+      if (recibido < calcularTotal() - 0.005) {
+        mostrarError(`Lo que paga el cliente no alcanza: faltan ${formatearMoneda(calcularTotal() - recibido)}.`);
+        efectivoRecibidoEl.focus();
+        return;
+      }
+    }
+
+    const clienteSeleccionado = obtenerClienteSeleccionado();
+    const nombrePedidosYa = pedidosYaNombreEl.value.trim() || (clienteSeleccionado ? clienteSeleccionado.nombre : '');
+    if (esPedidosYa && !nombrePedidosYa) {
+      mostrarError('Para Pedidos Ya, escribe el nombre del cliente.');
+      pedidosYaNombreEl.focus();
+      return;
+    }
+
     const nombreCliente = domicilioNombreEl.value.trim();
     const telefonoCliente = domicilioTelefonoEl.value.trim();
     const direccionCliente = domicilioDireccionEl.value.trim();
-    const telefonoAlterno = domicilioTelefonoAlternoEl.value.trim();
-    const notasEntrega = domicilioNotasEl.value.trim();
+    // Con cliente elegido, el teléfono alterno y las referencias salen de su
+    // ficha en Clientes; sin cliente, de los campos manuales.
+    const telefonoAlterno = clienteSeleccionado
+      ? (clienteSeleccionado.telefonoAlterno || '')
+      : domicilioTelefonoAlternoEl.value.trim();
+    const notasEntrega = clienteSeleccionado
+      ? (clienteSeleccionado.notas || '')
+      : domicilioNotasEl.value.trim();
     const clienteId = ventaClienteSelectEl.value ? parseInt(ventaClienteSelectEl.value, 10) : null;
 
     if (esDomicilio && (!telefonoCliente || !direccionCliente)) {
@@ -667,9 +817,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         cajaId: cajaActiva.id,
         ...datosPagoParaGuardar(),
         esDomicilio,
+        esPedidosYa,
+        tipoEntrega: esPedidosYa ? 'pedidosya' : esDomicilio ? 'domicilio' : 'local',
         costoEnvio,
         clienteId,
-        clienteNombre: esDomicilio ? nombreCliente : '',
+        clienteNombre: esDomicilio ? nombreCliente : esPedidosYa ? nombrePedidosYa : '',
         clienteTelefono: esDomicilio ? telefonoCliente : '',
         clienteDireccion: esDomicilio ? direccionCliente : '',
         telefonoAlterno: esDomicilio ? telefonoAlterno : '',
@@ -700,7 +852,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         costoEnvio,
         total,
         esDomicilio,
-        clienteNombre: nombreCliente,
+        esPedidosYa,
+        telefonoNegocio,
+        clienteNombre: esPedidosYa ? nombrePedidosYa : nombreCliente,
         clienteTelefono: telefonoCliente,
         clienteDireccion: direccionCliente,
         telefonoAlterno,
@@ -771,6 +925,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     reciboContenidoEl.innerHTML = `
       <h3 class="recibo-titulo">Frutería Los Biónicos</h3>
+      ${venta.telefonoNegocio ? `<p class="recibo-meta">Tel: ${escaparHtml(venta.telefonoNegocio)}</p>` : ''}
       <p class="recibo-meta">${fechaTexto}</p>
       <p class="recibo-meta">Recibo #${venta.numeroRecibo}</p>
       <p class="recibo-meta">Cajero: ${escaparHtml(venta.cajero)}</p>
@@ -784,6 +939,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
       <p class="recibo-metodo">Método de pago: ${etiquetaMetodoPago(venta.metodoPago)}</p>
       ${domicilioHtml}
+      ${venta.esPedidosYa ? `<div class="recibo-domicilio"><strong>🛍️ Pedidos Ya</strong><div>Cliente: ${escaparHtml(venta.clienteNombre || '')}</div></div>` : ''}
       <p class="recibo-gracias">¡Gracias por su compra!</p>
     `;
 
@@ -804,6 +960,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let alturaFija = 220; // encabezado + separadores + total + pie
     if (tieneEnvio) alturaFija += alturaLinea;
     if (venta.esDomicilio) alturaFija += lineasDomicilio * 18 + 20;
+    if (venta.telefonoNegocio) alturaFija += 20;
+    if (venta.esPedidosYa) alturaFija += 44;
     const cantidadNotas = venta.lineas.filter((l) => l.nota).length;
     // Margen extra al final: sin esto, el corte automático de la impresora
     // cae encima del último texto en vez de dejarlo completo antes de cortar.
@@ -831,6 +989,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     ctx.textAlign = 'center';
     ctx.fillText('Frutería Los Biónicos', ancho / 2, y);
     y += 30;
+
+    if (venta.telefonoNegocio) {
+      ctx.font = '13px sans-serif';
+      ctx.fillText(`Tel: ${venta.telefonoNegocio}`, ancho / 2, y);
+      y += 20;
+    }
 
     const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', {
       dateStyle: 'medium',
@@ -902,6 +1066,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     ctx.textAlign = 'center';
     ctx.fillText(`Método de pago: ${etiquetaMetodoPago(venta.metodoPago)}`, ancho / 2, y);
     y += 24;
+
+    if (venta.esPedidosYa) {
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('🛍️ Pedidos Ya', margenX, y);
+      y += 18;
+      ctx.font = '13px sans-serif';
+      ctx.fillText(recortarTexto(ctx, `Cliente: ${venta.clienteNombre || ''}`, ancho - margenX * 2), margenX, y);
+      y += 26;
+    }
 
     if (venta.esDomicilio) {
       ctx.textAlign = 'left';
@@ -992,7 +1166,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     texto('Fruteria Los Bionicos', 1, 1);
     const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
-    texto(`${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Cajero: ${venta.cajero}`, 1);
+    const lineaTelefono = venta.telefonoNegocio ? `Tel: ${venta.telefonoNegocio}<br />` : '';
+    texto(`${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Cajero: ${venta.cajero}`, 1);
     texto(SEPARADOR_RECIBO);
 
     const lineasProductos = venta.lineas.map((l) => {
@@ -1011,6 +1186,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     texto(`Total: ${formatearMoneda(venta.total)}`, 0, 1);
     texto(`Metodo de pago: ${etiquetaMetodoPago(venta.metodoPago)}`);
+
+    if (venta.esPedidosYa) {
+      texto(SEPARADOR_RECIBO);
+      texto(`Pedidos Ya<br />Cliente: ${venta.clienteNombre || ''}`);
+    }
 
     if (venta.esDomicilio) {
       texto(SEPARADOR_RECIBO);
@@ -1098,5 +1278,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarProductos();
   await cargarClientes();
   await cargarBancos();
+  await cargarAjustes();
   renderizarCarrito();
 });
