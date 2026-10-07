@@ -5,7 +5,7 @@
 // registro es literalmente distinta y Safari se ve obligado a pedirla de
 // la red sí o sí, sin necesidad de borrar datos del sitio (lo cual borraría
 // también la base de datos completa: productos, ventas, cajas, usuarios).
-const VERSION_SW = 'v27';
+const VERSION_SW = 'v28';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -15,7 +15,16 @@ if ('serviceWorker' in navigator) {
       const opciones = esSubcarpeta
         ? { scope: '../', updateViaCache: 'none' }
         : { scope: './', updateViaCache: 'none' };
-      navigator.serviceWorker.register(rutaSW, opciones).catch(() => {});
+      navigator.serviceWorker
+        .register(rutaSW, opciones)
+        .then((registro) => {
+          // Cada vez que la app vuelve a primer plano se busca una versión
+          // nueva (iOS puede mantenerla abierta días sin recargar).
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') registro.update().catch(() => {});
+          });
+        })
+        .catch(() => {});
     };
     // Se registra en tiempo de inactividad del navegador, no de inmediato:
     // así nunca compite con una navegación que el usuario haga justo al

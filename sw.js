@@ -1,4 +1,4 @@
-const CACHE_NAME = 'los-bionicos-v27';
+const CACHE_NAME = 'los-bionicos-v28';
 
 const ARCHIVOS_ESTATICOS = [
   './',
@@ -35,20 +35,27 @@ const ARCHIVOS_ESTATICOS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return Promise.allSettled(
-        ARCHIVOS_ESTATICOS.map((url) => cache.add(url))
-      );
-    })
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => {
+        // cache: 'reload' obliga a pedir cada archivo a la red y no al
+        // caché HTTP del navegador (GitHub Pages lo deja 10 min), para que
+        // la versión nueva nunca se guarde con archivos viejos.
+        return Promise.allSettled(
+          ARCHIVOS_ESTATICOS.map((url) => cache.add(new Request(url, { cache: 'reload' })))
+        );
+      })
+      // Se activa en cuanto termina de instalar, sin esperar a que iOS suelte
+      // la app anterior (a veces la mantiene viva aunque se cierre desde
+      // multitarea y la actualización quedaba "en espera" por días).
+      // NO se usa clients.claim(): esa combinación sí podía romper una
+      // navegación a mitad de camino. Las páginas ya abiertas siguen con su
+      // código hasta la siguiente navegación, y desde ahí todo es la versión
+      // nueva.
+      .then(() => self.skipWaiting())
   );
 });
 
-// Nota: a propósito NO se usa self.skipWaiting() ni self.clients.claim().
-// Esa combinación hace que el SW tome control de una pestaña que ya está
-// navegando a mitad de camino, lo que puede romper esa navegación. Con el
-// patrón estándar, el SW controla la app a partir de la SIGUIENTE carga,
-// que es exactamente como se abre siempre esta PWA (ícono en pantalla de
-// inicio del iPad) — no hay costo real en la práctica.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((nombres) => {
