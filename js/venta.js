@@ -795,7 +795,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // El botón se bloquea ya mismo (antes de pedir el código) para que un
+    // doble toque no registre la venta dos veces.
     botonConfirmarEl.disabled = true;
+
+    const vendedor = await Pin.pedir('Confirmar venta');
+    if (!vendedor) {
+      botonConfirmarEl.disabled = false;
+      return;
+    }
 
     try {
       const ventasExistentes = await DB.obtenerTodos(DB.STORES.VENTAS);
@@ -811,7 +819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const ventaId = await DB.agregar(DB.STORES.VENTAS, {
         numeroRecibo,
         fecha,
-        usuarioId: sesion.id,
+        usuarioId: vendedor.id,
         metodoPago,
         total,
         cajaId: cajaActiva.id,
@@ -845,7 +853,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       mostrarRecibo({
         numeroRecibo,
         fecha,
-        cajero: sesion.nombre,
+        cajero: vendedor.nombre,
         metodoPago,
         lineas: carrito.slice(),
         subtotal: calcularSubtotalProductos(),
@@ -928,7 +936,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ${venta.telefonoNegocio ? `<p class="recibo-meta">Tel: ${escaparHtml(venta.telefonoNegocio)}</p>` : ''}
       <p class="recibo-meta">${fechaTexto}</p>
       <p class="recibo-meta">Recibo #${venta.numeroRecibo}</p>
-      <p class="recibo-meta">Cajero: ${escaparHtml(venta.cajero)}</p>
+      <p class="recibo-meta">Atendió: ${escaparHtml(venta.cajero)}</p>
       <hr class="recibo-separador" />
       <div class="recibo-lineas">${filasHtml}</div>
       ${envioHtml}
@@ -1006,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     y += 20;
     ctx.fillText(`Recibo #${venta.numeroRecibo}`, ancho / 2, y);
     y += 20;
-    ctx.fillText(`Cajero: ${venta.cajero}`, ancho / 2, y);
+    ctx.fillText(`Atendió: ${venta.cajero}`, ancho / 2, y);
     y += 20;
 
     ctx.textAlign = 'left';
@@ -1167,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     texto('Fruteria Los Bionicos', 1, 1);
     const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
     const lineaTelefono = venta.telefonoNegocio ? `Tel: ${venta.telefonoNegocio}<br />` : '';
-    texto(`${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Cajero: ${venta.cajero}`, 1);
+    texto(`${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Atendio: ${venta.cajero}`, 1);
     texto(SEPARADOR_RECIBO);
 
     const lineasProductos = venta.lineas.map((l) => {

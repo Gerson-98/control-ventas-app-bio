@@ -63,6 +63,64 @@ const Auth = {
     return { id, ...nuevoUsuario };
   },
 
+  // ---------- Código de vendedor (PIN de 4 dígitos) ----------
+  // Identifica quién hace cada venta, caja, gasto o cancelación sin tener
+  // que iniciar sesión de nuevo. Se guarda cifrado, igual que la contraseña.
+
+  esPinValido(pin) {
+    return /^\d{4}$/.test(pin || '');
+  },
+
+  // Lanza un error si el PIN es inválido o ya lo usa otro usuario.
+  async validarPinDisponible(pin, idExcluir = null) {
+    if (!this.esPinValido(pin)) {
+      throw new Error('El código de venta debe tener exactamente 4 números.');
+    }
+    const usuarios = await DB.obtenerTodos(DB.STORES.USUARIOS);
+    for (const u of usuarios) {
+      if (u.id === idExcluir || !u.pinHash) continue;
+      if ((await hashPassword(pin, u.pinSalt)) === u.pinHash) {
+        throw new Error('Ese código ya lo usa otro usuario. Elige uno distinto.');
+      }
+    }
+  },
+
+  async establecerPin(id, pin) {
+    await this.validarPinDisponible(pin, id);
+    const usuario = await DB.obtenerPorId(DB.STORES.USUARIOS, id);
+    if (!usuario) throw new Error('Usuario no encontrado.');
+    const { salt, hash } = await crearHashConSalt(pin);
+    usuario.pinSalt = salt;
+    usuario.pinHash = hash;
+    await DB.actualizar(DB.STORES.USUARIOS, usuario);
+  },
+
+  async quitarPin(id) {
+    const usuario = await DB.obtenerPorId(DB.STORES.USUARIOS, id);
+    if (!usuario) return;
+    delete usuario.pinSalt;
+    delete usuario.pinHash;
+    await DB.actualizar(DB.STORES.USUARIOS, usuario);
+  },
+
+  async hayPinsConfigurados() {
+    const usuarios = await DB.obtenerTodos(DB.STORES.USUARIOS);
+    return usuarios.some((u) => u.activo !== false && u.pinHash);
+  },
+
+  // Devuelve { id, nombre } del usuario activo dueño del PIN, o null.
+  async verificarPin(pin) {
+    if (!this.esPinValido(pin)) return null;
+    const usuarios = await DB.obtenerTodos(DB.STORES.USUARIOS);
+    for (const u of usuarios) {
+      if (u.activo === false || !u.pinHash) continue;
+      if ((await hashPassword(pin, u.pinSalt)) === u.pinHash) {
+        return { id: u.id, nombre: u.nombre };
+      }
+    }
+    return null;
+  },
+
   async actualizarUsuario(id, cambios) {
     const usuarioActual = await DB.obtenerPorId(DB.STORES.USUARIOS, id);
     if (!usuarioActual) throw new Error('Usuario no encontrado.');

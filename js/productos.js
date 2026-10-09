@@ -37,13 +37,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const botonElegirGaleria = document.getElementById('boton-elegir-galeria');
   const fotoPreview = document.getElementById('producto-foto-preview');
   const botonQuitarFoto = document.getElementById('boton-quitar-foto');
-  const campoCostoWrap = document.getElementById('campo-costo-wrap');
-  const campoCosto = document.getElementById('producto-costo');
-
-  // El costo (para calcular ganancias) es información sensible: solo el
-  // administrador la ve y la edita; el cajero ni siquiera ve el campo.
-  const esAdmin = Auth.esAdministrador(sesion);
-  if (esAdmin) campoCostoWrap.classList.remove('oculto');
 
   // Blob temporal seleccionado en el formulario (File o Blob), hasta guardar.
   let blobFotoSeleccionada = null;
@@ -150,12 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const idExistente = campoId.value ? Number(campoId.value) : null;
 
-    let costo = null;
-    if (esAdmin) {
-      const costoIngresado = parseFloat(campoCosto.value);
-      costo = isNaN(costoIngresado) || costoIngresado < 0 ? null : costoIngresado;
-    }
-
     const botonGuardar = formProducto.querySelector('button[type="submit"]');
     if (botonGuardar.disabled) return;
     botonGuardar.disabled = true;
@@ -170,8 +157,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (blobFotoSeleccionada) {
           producto.imagenBlob = blobFotoSeleccionada;
         }
-        // El cajero no ve/edita el costo: si no es admin, se conserva el que ya había.
-        if (esAdmin) producto.costo = costo;
         await DB.actualizar(DB.STORES.PRODUCTOS, producto);
       } else {
         const nuevoProducto = {
@@ -184,7 +169,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (blobFotoSeleccionada) {
           nuevoProducto.imagenBlob = blobFotoSeleccionada;
         }
-        if (esAdmin) nuevoProducto.costo = costo;
         await DB.agregar(DB.STORES.PRODUCTOS, nuevoProducto);
       }
 
@@ -214,9 +198,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       campoId.value = producto.id;
       campoNombre.value = producto.nombre;
       campoPrecio.value = producto.precio;
-      if (esAdmin) {
-        campoCosto.value = producto.costo != null ? producto.costo : '';
-      }
 
       if (producto.imagenBlob) {
         blobFotoSeleccionada = producto.imagenBlob;

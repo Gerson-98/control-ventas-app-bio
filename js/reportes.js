@@ -52,14 +52,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (esAdmin) {
     document.getElementById('tarjeta-semana').classList.remove('oculto');
     document.getElementById('tarjeta-mes').classList.remove('oculto');
-    document.getElementById('tarjeta-ganancia').classList.remove('oculto');
     document.querySelectorAll('.pestana-periodo').forEach((b) => b.classList.remove('oculto'));
   }
 
   let periodoActual = 'dia';
   let todasLasVentas = [];
-  let todoElDetalle = [];
-  let mapaCostoPorProducto = new Map();
 
   // Valores elegidos en los controles de filtro específico (se recuerdan
   // aunque el usuario cambie de pestaña y vuelva).
@@ -227,29 +224,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('resumen-pedidosya-total').textContent = formatearPrecio(porMetodo.pedidosya);
   }
 
-  // La ganancia solo se calcula con productos que tienen un costo mayor a
-  // cero registrado. Un producto sin costo (vacío o 0) no aporta ganancia:
-  // así, si el negocio no usa costos, la ganancia es Q 0.00 en vez de
-  // mostrar la venta completa como si fuera ganancia.
-  function calcularGananciaDelPeriodo() {
-    const ventasPeriodo = obtenerVentasDelPeriodo();
-    const idsVentas = new Set(ventasPeriodo.map((v) => v.id));
-    let ganancia = 0;
-    todoElDetalle.forEach((linea) => {
-      if (!idsVentas.has(linea.ventaId)) return;
-      const costoUnitario = mapaCostoPorProducto.get(linea.productoId);
-      if (!(costoUnitario > 0)) return;
-      const ingresoLinea = linea.subtotal || 0;
-      ganancia += ingresoLinea - costoUnitario * (linea.cantidad || 0);
-    });
-    return ganancia;
-  }
-
-  function actualizarTarjetaGanancia() {
-    if (!esAdmin) return;
-    document.getElementById('resumen-ganancia-total').textContent = formatearPrecio(calcularGananciaDelPeriodo());
-  }
-
   // Devuelve { inicio, fin, etiqueta } según el filtro específico elegido
   // (periodoActual). Este rango es el que aplica a la TABLA y a la
   // GANANCIA del periodo — las tarjetas de resumen de arriba (Hoy/Semana/Mes)
@@ -349,12 +323,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const motivo = window.prompt('Motivo de la cancelación (opcional):', '') || '';
 
+    const responsable = await Pin.pedir('Cancelar venta');
+    if (!responsable) return;
+
     const ventaActualizada = {
       ...venta,
       cancelada: true,
       fechaCancelacion: Date.now(),
       motivoCancelacion: motivo,
-      canceladaPor: sesion.nombre,
+      canceladaPor: responsable.nombre,
     };
 
     await DB.actualizar(DB.STORES.VENTAS, ventaActualizada);
@@ -365,7 +342,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     actualizarTarjetasResumen();
     actualizarResumenMetodosPago();
-    if (esAdmin) actualizarTarjetaGanancia();
     await renderizarTabla();
   }
 
@@ -454,7 +430,51 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderizarBloquePagos(ventas, 'tarjeta', '💳', 'Tarjeta');
   }
 
+  async function renderizarVentasPorVendedor() {
+    const { etiqueta } = obtenerRangoFiltroActual();
+    document.getElementById('titulo-ventas-vendedor').textContent = `Ventas por vendedor ${etiqueta}`;
+    const contenedor = document.getElementById('ventas-por-vendedor');
+
+    const ventas = obtenerVentasDelPeriodo();
+    if (ventas.length === 0) {
+      contenedor.innerHTML = '<section class="pago-bloque"><p class="pago-bloque__vacio">No hubo ventas en este periodo.</p></section>';
+      return;
+    }
+
+    const porVendedor = new Map();
+    ventas.forEach((v) => {
+      const acumulado = porVendedor.get(v.usuarioId) || { cantidad: 0, total: 0 };
+      acumulado.cantidad += 1;
+      acumulado.total += v.total || 0;
+      porVendedor.set(v.usuarioId, acumulado);
+    });
+
+    const filas = [];
+    for (const [usuarioId, datos] of porVendedor.entries()) {
+      filas.push({ nombre: await obtenerNombreCajero(usuarioId), ...datos });
+    }
+    filas.sort((a, b) => b.total - a.total);
+
+    contenedor.innerHTML = `
+      <section class="pago-bloque">
+        <div class="pagos-tabla-envoltorio">
+          <table class="tabla-reportes">
+            <thead><tr><th>Vendedor</th><th>Ventas</th><th>Total vendido</th></tr></thead>
+            <tbody>
+              ${filas.map((f) => `
+                <tr>
+                  <td>${escaparHtml(f.nombre)}</td>
+                  <td>${f.cantidad}</td>
+                  <td>${formatearPrecio(f.total)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>`;
+  }
+
   async function renderizarTabla() {
+    await renderizarVentasPorVendedor();
     renderizarPagosElectronicos();
     const ventasPeriodo = obtenerVentasDelPeriodoParaTabla().slice().sort((a, b) => b.fecha - a.fecha);
 
@@ -540,7 +560,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function refrescarVistaFiltrada() {
     actualizarTituloPeriodoTabla();
     await renderizarTabla();
-    if (esAdmin) actualizarTarjetaGanancia();
   }
 
   pestanas.forEach((boton) => {
@@ -648,16 +667,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarControlesDeFiltro();
     actualizarTituloPeriodoTabla();
 
-    if (esAdmin) {
-      const [detalle, productos] = await Promise.all([
-        DB.obtenerTodos(DB.STORES.DETALLE_VENTA),
-        DB.obtenerTodos(DB.STORES.PRODUCTOS),
-      ]);
-      todoElDetalle = detalle;
-      mapaCostoPorProducto = new Map(productos.map((p) => [p.id, p.costo != null ? p.costo : null]));
-      actualizarTarjetaGanancia();
-    }
-
     await renderizarTabla();
   }
 
@@ -754,7 +763,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ${venta.telefonoNegocio ? `<p class="recibo-meta">Tel: ${escaparHtml(venta.telefonoNegocio)}</p>` : ''}
       <p class="recibo-meta">${fechaTexto}</p>
       <p class="recibo-meta">Recibo #${venta.numeroRecibo}</p>
-      <p class="recibo-meta">Cajero: ${escaparHtml(venta.cajero)}</p>
+      <p class="recibo-meta">Atendió: ${escaparHtml(venta.cajero)}</p>
       <hr class="recibo-separador" />
       <div class="recibo-lineas">${filasHtml}</div>
       ${envioHtml}
@@ -827,7 +836,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     y += 20;
     ctx.fillText(`Recibo #${venta.numeroRecibo}`, ancho / 2, y);
     y += 20;
-    ctx.fillText(`Cajero: ${venta.cajero}`, ancho / 2, y);
+    ctx.fillText(`Atendió: ${venta.cajero}`, ancho / 2, y);
     y += 20;
 
     ctx.textAlign = 'left';
@@ -980,7 +989,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     texto('Fruteria Los Bionicos', 1, 1);
     const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
     const lineaTelefono = venta.telefonoNegocio ? `Tel: ${venta.telefonoNegocio}<br />` : '';
-    texto(`${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Cajero: ${venta.cajero}`, 1);
+    texto(`${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Atendio: ${venta.cajero}`, 1);
     texto(SEPARADOR_RECIBO);
 
     const lineasProductos = venta.lineas.map((l) => {

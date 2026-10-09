@@ -1737,6 +1737,89 @@ button, input, select {
   font-size: 17px;
 }
 
+/* ---------- Ventana de código de vendedor (PIN) ---------- */
+
+.pin-fondo {
+  z-index: 1000;
+}
+
+.pin-tarjeta {
+  max-width: 340px;
+  text-align: center;
+}
+
+.pin-titulo {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.pin-ayuda {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.pin-puntos {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.pin-puntos span {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-borde);
+  background: transparent;
+}
+
+.pin-puntos span.pin-punto--lleno {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.pin-puntos--error {
+  animation: pin-sacudida 0.3s;
+}
+
+@keyframes pin-sacudida {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+.pin-mensaje {
+  min-height: 20px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-error, #b3261e);
+}
+
+.pin-teclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.pin-tecla {
+  padding: 18px 0;
+  font-size: 24px;
+  font-weight: 800;
+  border: 1.5px solid var(--color-borde);
+  border-radius: 14px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pin-tecla:active {
+  background: var(--color-fondo);
+  border-color: var(--color-primario);
+}
+
 .mensaje-exito {
   padding: 10px 12px;
   border-radius: var(--radio);

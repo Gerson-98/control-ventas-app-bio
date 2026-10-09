@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('boton-inicio-respaldo').classList.remove('oculto');
     document.getElementById('boton-inicio-usuarios').classList.remove('oculto');
     mostrarAvisoRespaldoSiHaceFalta();
+    Auth.hayPinsConfigurados()
+      .then((hay) => {
+        if (!hay) document.getElementById('aviso-codigos').classList.remove('oculto');
+      })
+      .catch(() => {});
   }
 
   document.getElementById('boton-salir').addEventListener('click', () => {

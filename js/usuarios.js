@@ -28,6 +28,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const campoPassword = document.getElementById('usuario-password');
   const campoPasswordConfirmar = document.getElementById('usuario-password-confirmar');
   const campoActivo = document.getElementById('usuario-activo');
+  const campoPin = document.getElementById('usuario-pin');
+  const campoQuitarPinWrap = document.getElementById('campo-quitar-pin');
+  const campoQuitarPin = document.getElementById('usuario-quitar-pin');
+
+  // Siempre debe quedar al menos un administrador activo: es quien crea los
+  // códigos de venta y administra la app.
+  async function esUltimoAdministradorActivo(idUsuario) {
+    const usuarios = await Auth.listarUsuarios();
+    const objetivo = usuarios.find((u) => u.id === idUsuario);
+    if (!objetivo || objetivo.activo === false || !Auth.esAdministrador(objetivo)) return false;
+    const otrosAdmins = usuarios.filter(
+      (u) => u.id !== idUsuario && u.activo !== false && Auth.esAdministrador(u)
+    );
+    return otrosAdmins.length === 0;
+  }
 
   // ---------- Datos del negocio (teléfono del recibo) ----------
   const campoTelefonoNegocio = document.getElementById('negocio-telefono');
@@ -122,12 +137,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     botonGuardar.disabled = true;
 
     try {
+      const pin = campoPin.value.trim();
+      if (pin) await Auth.validarPinDisponible(pin, idExistente);
+
       if (idExistente) {
+        const pierdeAdmin = rol !== 'administrador' || !campoActivo.checked;
+        if (pierdeAdmin && (await esUltimoAdministradorActivo(idExistente))) {
+          throw new Error('Debe quedar al menos un administrador activo. Crea otro administrador antes de cambiar o desactivar este.');
+        }
         const cambios = { nombre, usuario, rol, activo: campoActivo.checked };
         if (cambiandoPassword) cambios.password = password;
         await Auth.actualizarUsuario(idExistente, cambios);
+        if (pin) await Auth.establecerPin(idExistente, pin);
+        else if (campoQuitarPin.checked) await Auth.quitarPin(idExistente);
       } else {
-        await Auth.crearUsuario({ nombre, usuario, password, rol });
+        const creado = await Auth.crearUsuario({ nombre, usuario, password, rol });
+        if (pin) await Auth.establecerPin(creado.id, pin);
       }
 
       cerrarModal();
@@ -157,6 +182,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       campoPassword.value = '';
       campoPasswordConfirmar.value = '';
       campoActivo.checked = usuario.activo !== false;
+      campoQuitarPin.checked = false;
+      campoQuitarPinWrap.classList.toggle('oculto', !usuario.pinHash);
 
       notaPassword.classList.remove('oculto');
       campoActivoWrap.classList.remove('oculto');
@@ -165,6 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       campoId.value = '';
       campoRol.value = 'cajero';
       campoActivo.checked = true;
+      campoQuitarPinWrap.classList.add('oculto');
 
       notaPassword.classList.add('oculto');
       campoActivoWrap.classList.add('oculto');
@@ -183,6 +211,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (sesionActual && sesionActual.id === id) {
       alert('No puedes eliminar tu propia cuenta mientras tienes la sesión iniciada.');
+      return;
+    }
+
+    if (await esUltimoAdministradorActivo(id)) {
+      alert('No puedes eliminar al único administrador. Crea otro administrador primero.');
       return;
     }
 
@@ -233,6 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="tarjeta-usuario__insignias">
             <span class="insignia-rol insignia-rol--${Auth.esAdministrador({ rol: usuario.rol }) ? 'duena' : 'empleado'}">${etiquetaRol(usuario.rol)}</span>
             <span class="insignia-estado ${activo ? 'insignia-estado--activo' : 'insignia-estado--inactivo'}">${activo ? 'Activo' : 'Inactivo'}</span>
+            <span class="insignia-estado ${usuario.pinHash ? 'insignia-estado--activo' : 'insignia-estado--inactivo'}">${usuario.pinHash ? '🔑 Con código' : 'Sin código'}</span>
           </div>
         </div>
         <div class="tarjeta-producto__acciones">

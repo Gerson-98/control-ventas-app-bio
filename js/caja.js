@@ -92,9 +92,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (botonAbrir.disabled) return;
     botonAbrir.disabled = true;
 
+    const responsable = await Pin.pedir('Abrir caja');
+    if (!responsable) {
+      botonAbrir.disabled = false;
+      return;
+    }
+
     try {
       await DB.agregar(DB.STORES.CAJAS, {
-        usuarioId: sesion.id,
+        usuarioId: responsable.id,
         fechaApertura: Date.now(),
         montoInicial: monto,
         fechaCierre: null,
@@ -192,6 +198,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (botonConfirmarCierre.disabled) return;
     botonConfirmarCierre.disabled = true;
 
+    const responsable = await Pin.pedir('Cerrar caja');
+    if (!responsable) {
+      botonConfirmarCierre.disabled = false;
+      return;
+    }
+
     try {
       const cajaActualizada = {
         ...cajaActual,
@@ -199,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         montoContado: calculoCierrePendiente.contado,
         diferencia: calculoCierrePendiente.diferencia,
         motivoDiferencia: motivoDiferenciaEl.value.trim(),
-        usuarioCierreId: sesion.id,
+        usuarioCierreId: responsable.id,
         cerrada: true,
       };
       await DB.actualizar(DB.STORES.CAJAS, cajaActualizada);
@@ -251,10 +263,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (botonRegistrar.disabled) return;
     botonRegistrar.disabled = true;
 
+    const responsable = await Pin.pedir(tipo === 'ingreso' ? 'Registrar ingreso' : 'Registrar gasto');
+    if (!responsable) {
+      botonRegistrar.disabled = false;
+      return;
+    }
+
     try {
       await DB.agregar(DB.STORES.GASTOS, {
         fecha: Date.now(),
-        usuarioId: sesion.id,
+        usuarioId: responsable.id,
         cajaId: cajaActual.id,
         descripcion,
         monto,
@@ -395,6 +413,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         boton.addEventListener('click', async () => {
           const id = parseInt(boton.dataset.id, 10);
           if (!window.confirm('¿Eliminar este movimiento?')) return;
+          const responsable = await Pin.pedir('Eliminar movimiento');
+          if (!responsable) return;
           try {
             await DB.eliminar(DB.STORES.GASTOS, id);
             await cargarEstadoCaja();

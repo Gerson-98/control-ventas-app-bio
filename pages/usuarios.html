@@ -110,6 +110,21 @@
           Deja los campos de contraseña en blanco para no cambiarla.
         </p>
 
+        <div class="campo">
+          <label for="usuario-pin">🔑 Código de venta (4 números)</label>
+          <input type="text" id="usuario-pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Ej. 2222" />
+          <p class="nota-password" id="nota-pin" style="margin:6px 0 0;">
+            Con este código la persona se identifica al vender, abrir o cerrar caja, registrar gastos y cancelar ventas. Cada usuario debe tener uno distinto.
+          </p>
+        </div>
+
+        <div class="campo campo-checkbox oculto" id="campo-quitar-pin">
+          <label for="usuario-quitar-pin">
+            <input type="checkbox" id="usuario-quitar-pin" />
+            Quitar el código de este usuario
+          </label>
+        </div>
+
         <div class="campo campo-checkbox oculto" id="campo-activo">
           <label for="usuario-activo">
             <input type="checkbox" id="usuario-activo" checked />
