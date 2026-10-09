@@ -750,8 +750,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="recibo-domicilio">
           <strong>🛵 Entrega a domicilio</strong>
           ${venta.clienteNombre ? `<div>${escaparHtml(venta.clienteNombre)}</div>` : ''}
-          <div>${escaparHtml(venta.clienteTelefono)}</div>
-          <div>${escaparHtml(venta.clienteDireccion)}</div>
+          ${venta.clienteTelefono ? `<div>${escaparHtml(venta.clienteTelefono)}</div>` : ''}
+          ${venta.clienteDireccion ? `<div>${escaparHtml(venta.clienteDireccion)}</div>` : ''}
           ${venta.telefonoAlterno ? `<div>Tel. alterno: ${escaparHtml(venta.telefonoAlterno)}</div>` : ''}
           ${venta.notasEntrega ? `<div><em>${escaparHtml(venta.notasEntrega)}</em></div>` : ''}
         </div>
@@ -917,10 +917,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.fillText(venta.clienteNombre, margenX, y);
         y += 18;
       }
-      ctx.fillText(venta.clienteTelefono, margenX, y);
-      y += 18;
-      ctx.fillText(recortarTexto(ctx, venta.clienteDireccion, ancho - margenX * 2), margenX, y);
-      y += 18;
+      if (venta.clienteTelefono) {
+        ctx.fillText(venta.clienteTelefono, margenX, y);
+        y += 18;
+      }
+      if (venta.clienteDireccion) {
+        ctx.fillText(recortarTexto(ctx, venta.clienteDireccion, ancho - margenX * 2), margenX, y);
+        y += 18;
+      }
       if (venta.telefonoAlterno) {
         ctx.fillText(`Tel. alterno: ${venta.telefonoAlterno}`, margenX, y);
         y += 18;
@@ -1018,8 +1022,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       texto(SEPARADOR_RECIBO);
       const lineasDomicilio = ['Entrega a domicilio'];
       if (venta.clienteNombre) lineasDomicilio.push(venta.clienteNombre);
-      lineasDomicilio.push(venta.clienteTelefono);
-      lineasDomicilio.push(venta.clienteDireccion);
+      if (venta.clienteTelefono) lineasDomicilio.push(venta.clienteTelefono);
+      if (venta.clienteDireccion) lineasDomicilio.push(venta.clienteDireccion);
       if (venta.telefonoAlterno) lineasDomicilio.push(`Tel. alterno: ${venta.telefonoAlterno}`);
       if (venta.notasEntrega) lineasDomicilio.push(venta.notasEntrega);
       texto(lineasDomicilio.join('<br />'));
