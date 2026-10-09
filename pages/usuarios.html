@@ -52,7 +52,10 @@
       </div>
 
       <div class="app-main__header">
-        <h2>Usuarios del sistema</h2>
+        <div>
+          <h2>🔐 Usuarios (cuentas de acceso)</h2>
+          <p class="subtitulo-seccion">Cuentas que inician sesión en la tablet: la del cajero donde entra todo el personal y las de administración.</p>
+        </div>
         <button class="boton boton-primario boton-ancho-auto" id="boton-nuevo-usuario">
           + Nuevo usuario
         </button>
@@ -64,7 +67,63 @@
         <span class="icono">👤</span>
         <p>Todavía no has agregado usuarios.<br />Toca "Nuevo usuario" para empezar.</p>
       </div>
+
+      <div class="app-main__header" style="margin-top:32px;">
+        <div>
+          <h2>🧾 Vendedores</h2>
+          <p class="subtitulo-seccion">Solo nombre y código de 4 números. No inician sesión: se identifican con su código al vender, abrir caja o registrar gastos.</p>
+        </div>
+        <button class="boton boton-primario boton-ancho-auto" id="boton-nuevo-vendedor">
+          + Nuevo vendedor
+        </button>
+      </div>
+
+      <div id="lista-vendedores" class="lista-tarjetas"></div>
+
+      <div id="estado-vacio-vendedores" class="estado-vacio oculto">
+        <span class="icono">🧾</span>
+        <p>Todavía no has agregado vendedores.<br />Toca "Nuevo vendedor" para empezar.</p>
+      </div>
     </main>
+  </div>
+
+  <!-- Modal crear/editar vendedor -->
+  <div class="fondo-modal oculto" id="fondo-modal-vendedor">
+    <div class="tarjeta-modal">
+      <button type="button" class="boton-cerrar-modal-x" id="boton-cerrar-vendedor-x">✕</button>
+      <h3 id="titulo-modal-vendedor">Nuevo vendedor</h3>
+
+      <form id="form-vendedor">
+        <input type="hidden" id="vendedor-id" />
+
+        <div class="mensaje-error" id="error-vendedor"></div>
+
+        <div class="campo">
+          <label for="vendedor-nombre">Nombre</label>
+          <input type="text" id="vendedor-nombre" required />
+        </div>
+
+        <div class="campo">
+          <label for="vendedor-pin">🔑 Código (4 números)</label>
+          <input type="text" id="vendedor-pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Ej. 2222" />
+          <p class="nota-password" id="nota-pin-vendedor" style="margin:6px 0 0;">
+            Cada vendedor debe tener un código distinto.
+          </p>
+        </div>
+
+        <div class="campo campo-checkbox oculto" id="campo-vendedor-activo">
+          <label for="vendedor-activo">
+            <input type="checkbox" id="vendedor-activo" checked />
+            Vendedor activo
+          </label>
+        </div>
+
+        <div class="modal-acciones">
+          <button type="button" class="boton boton-secundario" id="boton-cancelar-vendedor">Cancelar</button>
+          <button type="submit" class="boton boton-primario">Guardar</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Modal crear/editar usuario -->
@@ -111,10 +170,10 @@
         </p>
 
         <div class="campo">
-          <label for="usuario-pin">🔑 Código de venta (4 números)</label>
+          <label for="usuario-pin">🔑 Código de venta (opcional)</label>
           <input type="text" id="usuario-pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Ej. 2222" />
           <p class="nota-password" id="nota-pin" style="margin:6px 0 0;">
-            Con este código la persona se identifica al vender, abrir o cerrar caja, registrar gastos y cancelar ventas. Cada usuario debe tener uno distinto.
+            Solo si esta persona también vende con su propia cuenta (ej. la administradora). Para el personal de ventas usa "Nuevo vendedor". El código debe ser distinto al de los demás.
           </p>
         </div>
 

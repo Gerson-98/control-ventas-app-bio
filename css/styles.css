@@ -2078,3 +2078,10 @@ button, input, select {
 .filtro-rango-fechas .campo {
   margin-bottom: 0;
 }
+
+.subtitulo-seccion {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+  max-width: 520px;
+}

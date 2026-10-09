@@ -121,6 +121,24 @@ const Auth = {
     return null;
   },
 
+  // Vendedor: solo nombre y código. No tiene usuario ni contraseña, así que
+  // no puede iniciar sesión; únicamente se identifica con su código al
+  // vender o cuadrar caja.
+  async crearVendedor({ nombre, pin }) {
+    await this.validarPinDisponible(pin);
+    const { salt, hash } = await crearHashConSalt(pin);
+    const nuevo = {
+      nombre,
+      rol: 'vendedor',
+      activo: true,
+      pinSalt: salt,
+      pinHash: hash,
+      creadoEn: Date.now(),
+    };
+    const id = await DB.agregar(DB.STORES.USUARIOS, nuevo);
+    return { id, ...nuevo };
+  },
+
   async actualizarUsuario(id, cambios) {
     const usuarioActual = await DB.obtenerPorId(DB.STORES.USUARIOS, id);
     if (!usuarioActual) throw new Error('Usuario no encontrado.');
