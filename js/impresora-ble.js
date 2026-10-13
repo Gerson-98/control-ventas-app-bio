@@ -4,8 +4,8 @@
 // Si navigator.bluetooth no existe, disponible() devuelve false y quien llama
 // debe usar el método anterior (thermer://).
 const ImpresoraBLE = (() => {
-  const SERVICIO = 0xff00;
-  const CARACTERISTICA = 0xff02;
+  const SERVICIO = '0000ff00-0000-1000-8000-00805f9b34fb';
+  const CARACTERISTICA = '0000ff02-0000-1000-8000-00805f9b34fb';
   const COLUMNAS = 48; // 80 mm, fuente A a 203 dpi
   const TAM_PAQUETE = 100;
   const PAUSA_MS = 25;
@@ -17,22 +17,38 @@ const ImpresoraBLE = (() => {
     return typeof navigator !== 'undefined' && !!navigator.bluetooth;
   }
 
+  // Bluefy a veces rechaza con un error sin texto; este envoltorio indica en
+  // qué paso falló para poder diagnosticarlo.
+  async function paso(nombre, accion) {
+    try {
+      return await accion();
+    } catch (error) {
+      if (error && error.name === 'NotFoundError' && nombre === 'elegir impresora') throw error;
+      const detalle = (error && (error.message || error.name)) || String(error);
+      const nuevo = new Error(`[${nombre}] ${detalle}`);
+      nuevo.name = (error && error.name) || 'Error';
+      throw nuevo;
+    }
+  }
+
   async function conectar() {
     if (caracteristica && dispositivo && dispositivo.gatt.connected) return caracteristica;
 
     // requestDevice debe ejecutarse directo desde el toque del usuario.
     if (!dispositivo) {
-      dispositivo = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [SERVICIO]
-      });
+      dispositivo = await paso('elegir impresora', () =>
+        navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [SERVICIO]
+        })
+      );
       dispositivo.addEventListener('gattserverdisconnected', () => {
         caracteristica = null;
       });
     }
-    const servidor = await dispositivo.gatt.connect();
-    const servicio = await servidor.getPrimaryService(SERVICIO);
-    caracteristica = await servicio.getCharacteristic(CARACTERISTICA);
+    const servidor = await paso('conectar', () => dispositivo.gatt.connect());
+    const servicio = await paso('servicio FF00', () => servidor.getPrimaryService(SERVICIO));
+    caracteristica = await paso('caracteristica FF02', () => servicio.getCharacteristic(CARACTERISTICA));
     return caracteristica;
   }
 
@@ -159,8 +175,11 @@ const ImpresoraBLE = (() => {
     const c = await conectar();
     for (let i = 0; i < datos.length; i += TAM_PAQUETE) {
       const trozo = datos.slice(i, i + TAM_PAQUETE);
-      if (c.properties.writeWithoutResponse) await c.writeValueWithoutResponse(trozo);
-      else await c.writeValue(trozo);
+      await paso('enviar datos', () => {
+        // Bluefy puede no exponer writeValueWithoutResponse; writeValue funciona en ambos casos.
+        if (c.properties.writeWithoutResponse && c.writeValueWithoutResponse) return c.writeValueWithoutResponse(trozo);
+        return c.writeValue(trozo);
+      });
       await new Promise((r) => setTimeout(r, PAUSA_MS));
     }
   }
