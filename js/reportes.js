@@ -1055,9 +1055,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = `thermer://?data=${datosCodificados}`;
   }
 
-  botonImprimirDirecto.addEventListener('click', () => {
+  // En Bluefy (Web Bluetooth) imprime directo; en Safari cae al método thermer://.
+  botonImprimirDirecto.addEventListener('click', async () => {
     if (!ultimaVentaParaRecibo) return;
-    imprimirConThermer(ultimaVentaParaRecibo);
+    if (!ImpresoraBLE.disponible()) {
+      imprimirConThermer(ultimaVentaParaRecibo);
+      return;
+    }
+    try {
+      await ImpresoraBLE.imprimir(ultimaVentaParaRecibo);
+    } catch (error) {
+      if (error.name === 'NotFoundError') return; // el usuario canceló la selección
+      window.alert(`No se pudo imprimir: ${error.message}`);
+    }
   });
 
   botonCompartirRecibo.addEventListener('click', async () => {
