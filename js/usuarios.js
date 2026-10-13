@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ---------- Datos del negocio (teléfono del recibo) ----------
   const campoTelefonoNegocio = document.getElementById('negocio-telefono');
+  const campoDireccionNegocio = document.getElementById('negocio-direccion');
   const botonGuardarNegocio = document.getElementById('boton-guardar-negocio');
   const errorNegocio = document.getElementById('error-negocio');
   const exitoNegocio = document.getElementById('exito-negocio');
@@ -53,8 +54,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const ajustes = await DB.obtenerPorId(DB.STORES.AJUSTES, 1);
     campoTelefonoNegocio.value = ajustes && ajustes.telefonoNegocio ? ajustes.telefonoNegocio : '';
+    campoDireccionNegocio.value = ajustes && ajustes.direccionNegocio ? ajustes.direccionNegocio : '';
   } catch (err) {
     campoTelefonoNegocio.value = '';
+    campoDireccionNegocio.value = '';
   }
 
   botonGuardarNegocio.addEventListener('click', async () => {
@@ -66,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await DB.actualizar(DB.STORES.AJUSTES, {
         id: 1,
         telefonoNegocio: campoTelefonoNegocio.value.trim(),
+        direccionNegocio: campoDireccionNegocio.value.trim(),
       });
       exitoNegocio.classList.remove('oculto');
     } catch (err) {

@@ -118,6 +118,7 @@ const ImpresoraBLE = (() => {
     fila('Fruteria Los Bionicos');
     grande(false);
     negrita(false);
+    if (venta.direccionNegocio) envolver(venta.direccionNegocio).forEach(fila);
     if (venta.telefonoNegocio) fila(`Tel: ${venta.telefonoNegocio}`);
     fila(new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' }));
     fila(`Recibo #${venta.numeroRecibo}`);
@@ -190,5 +191,19 @@ const ImpresoraBLE = (() => {
     await enviar(construirRecibo(venta));
   }
 
-  return { disponible, imprimir };
+  // Parte un texto en líneas de máximo `max` caracteres (para el recibo en imagen).
+  function partirTexto(texto, max) {
+    const salida = [];
+    let resto = String(texto || '').trim();
+    while (resto.length > max) {
+      let corte = resto.lastIndexOf(' ', max);
+      if (corte <= 0) corte = max;
+      salida.push(resto.slice(0, corte));
+      resto = resto.slice(corte).trimStart();
+    }
+    if (resto) salida.push(resto);
+    return salida;
+  }
+
+  return { disponible, imprimir, partirTexto };
 })();

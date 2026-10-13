@@ -677,13 +677,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   let telefonoNegocio = '';
+  let direccionNegocio = '';
 
   async function abrirReciboDesdeHistorial(venta, nombreCajero) {
     try {
       const ajustes = await DB.obtenerPorId(DB.STORES.AJUSTES, 1);
       telefonoNegocio = ajustes && ajustes.telefonoNegocio ? ajustes.telefonoNegocio : '';
+      direccionNegocio = ajustes && ajustes.direccionNegocio ? ajustes.direccionNegocio : '';
     } catch (err) {
       telefonoNegocio = '';
+      direccionNegocio = '';
     }
 
     const detalle = await DB.obtenerPorIndice(DB.STORES.DETALLE_VENTA, 'ventaId', venta.id);
@@ -706,6 +709,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       esDomicilio: venta.esDomicilio,
       esPedidosYa: !!venta.esPedidosYa,
       telefonoNegocio,
+      direccionNegocio,
       clienteNombre: venta.clienteNombre || '',
       clienteTelefono: venta.clienteTelefono || '',
       clienteDireccion: venta.clienteDireccion || '',
@@ -760,6 +764,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     reciboContenidoEl.innerHTML = `
       <h3 class="recibo-titulo">Frutería Los Biónicos</h3>
+      ${venta.direccionNegocio ? `<p class="recibo-meta">${escaparHtml(venta.direccionNegocio)}</p>` : ''}
       ${venta.telefonoNegocio ? `<p class="recibo-meta">Tel: ${escaparHtml(venta.telefonoNegocio)}</p>` : ''}
       <p class="recibo-meta">${fechaTexto}</p>
       <p class="recibo-meta">Recibo #${venta.numeroRecibo}</p>
@@ -797,6 +802,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tieneEnvio) alturaFija += alturaLinea;
     if (venta.esDomicilio) alturaFija += lineasDomicilio * 18 + 20;
     if (venta.telefonoNegocio) alturaFija += 20;
+    const lineasDireccionNegocio = venta.direccionNegocio ? ImpresoraBLE.partirTexto(venta.direccionNegocio, 44) : [];
+    alturaFija += lineasDireccionNegocio.length * 20;
     if (venta.esPedidosYa) alturaFija += 44;
     const cantidadNotas = venta.lineas.filter((l) => l.nota).length;
     const margenInferior = 70;
@@ -820,8 +827,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     ctx.fillText('Frutería Los Biónicos', ancho / 2, y);
     y += 30;
 
+    ctx.font = '13px sans-serif';
+    for (const lineaDireccion of lineasDireccionNegocio) {
+      ctx.fillText(lineaDireccion, ancho / 2, y);
+      y += 20;
+    }
+
     if (venta.telefonoNegocio) {
-      ctx.font = '13px sans-serif';
       ctx.fillText(`Tel: ${venta.telefonoNegocio}`, ancho / 2, y);
       y += 20;
     }
@@ -992,8 +1004,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     texto('Fruteria Los Bionicos', 1, 1);
     const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
-    const lineaTelefono = venta.telefonoNegocio ? `Tel: ${venta.telefonoNegocio}<br />` : '';
-    texto(`${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Atendio: ${venta.cajero}`, 1);
+    const lineaDireccion = venta.direccionNegocio ? `${venta.direccionNegocio}<br />` : '';
+    const lineaTelefono = (venta.telefonoNegocio ? `Tel: ${venta.telefonoNegocio}<br />` : '');
+    texto(`${lineaDireccion}${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Atendio: ${venta.cajero}`, 1);
     texto(SEPARADOR_RECIBO);
 
     const lineasProductos = venta.lineas.map((l) => {

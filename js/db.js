@@ -117,7 +117,7 @@ function abrirDB() {
 
       if (!db.objectStoreNames.contains(STORES.AJUSTES)) {
         // Datos del negocio configurables. Un solo registro (id 1):
-        // { id: 1, telefonoNegocio }
+        // { id: 1, telefonoNegocio, direccionNegocio }
         db.createObjectStore(STORES.AJUSTES, { keyPath: 'id' });
       }
     };
