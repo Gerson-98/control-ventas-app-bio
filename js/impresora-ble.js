@@ -145,6 +145,8 @@ const ImpresoraBLE = (() => {
     grande(false);
     negrita(false);
     fila(`Metodo de pago: ${ETIQUETAS_PAGO[venta.metodoPago] || venta.metodoPago || ''}`);
+    const tipoPedido = venta.esPedidosYa ? 'Pedidos Ya' : venta.esDomicilio ? 'A domicilio' : 'Local';
+    fila(`Tipo de pedido: ${tipoPedido}`);
 
     if (venta.esPedidosYa) {
       separador();
