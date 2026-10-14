@@ -9,7 +9,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('nombre-usuario-activo').textContent = sesion.nombre;
 
   if (typeof VERSION_SW !== 'undefined') {
-    document.getElementById('inicio-version').textContent = `Versión ${VERSION_SW}`;
+    // "Sin internet" solo funciona si el navegador permite service workers
+    // (Safari sí; algunos navegadores como Bluefy no).
+    const versionEl = document.getElementById('inicio-version');
+    const pintarVersion = (estado) => {
+      versionEl.textContent = `Versión ${VERSION_SW} · Sin internet: ${estado}`;
+    };
+    pintarVersion('comprobando...');
+    if (!('serviceWorker' in navigator)) {
+      pintarVersion('NO disponible en este navegador');
+    } else {
+      navigator.serviceWorker
+        .getRegistration()
+        .then((registro) => pintarVersion(registro && registro.active ? 'disponible' : 'NO disponible'))
+        .catch(() => pintarVersion('NO disponible'));
+    }
   }
 
   if (Auth.esAdministrador(sesion)) {

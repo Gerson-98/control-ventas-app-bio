@@ -1,4 +1,4 @@
-const CACHE_NAME = 'los-bionicos-v38';
+const CACHE_NAME = 'los-bionicos-v39';
 
 const ARCHIVOS_ESTATICOS = [
   './',
@@ -13,6 +13,7 @@ const ARCHIVOS_ESTATICOS = [
   './js/inicio.js',
   './js/productos.js',
   './js/impresora-ble.js',
+  './js/aviso-respaldo.js',
   './js/venta.js',
   './js/reportes.js',
   './js/usuarios.js',
