@@ -78,12 +78,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     cerrarModal();
   });
 
-  function manejarSeleccionArchivo(inputEl) {
+  // Las fotos del celular/tablet pesan ~3 MB; con decenas de productos eso
+  // hace lento el catálogo y gigante el respaldo. Se reducen a un máximo de
+  // 400 px de lado en JPEG (~30 KB), más que suficiente para la grilla.
+  const LADO_MAX_FOTO = 400;
+  function reducirFoto(archivo) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(archivo);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const escala = Math.min(1, LADO_MAX_FOTO / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * escala));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * escala));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob || archivo), 'image/jpeg', 0.8);
+      };
+      // Si el navegador no puede leerla, se guarda la original como antes.
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(archivo);
+      };
+      img.src = url;
+    });
+  }
+
+  async function manejarSeleccionArchivo(inputEl) {
     const archivo = inputEl.files && inputEl.files[0];
     if (!archivo) return;
 
-    blobFotoSeleccionada = archivo;
-    mostrarPreviewModal(archivo);
+    const foto = await reducirFoto(archivo);
+    blobFotoSeleccionada = foto;
+    mostrarPreviewModal(foto);
   }
 
   botonTomarFoto.addEventListener('click', () => campoFotoCamara.click());
