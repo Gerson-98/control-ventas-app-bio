@@ -438,6 +438,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     estadoVacio.classList.add('oculto');
 
+    // Nombre del vendedor/usuario que hizo cada venta (venta.usuarioId).
+    const nombresPorId = new Map();
+    for (const u of await DB.obtenerTodos(DB.STORES.USUARIOS)) nombresPorId.set(u.id, u.nombre);
+
     for (const venta of ventas) {
       const fila = document.createElement('tr');
       if (venta.cancelada) fila.classList.add('fila-venta-cancelada');
@@ -455,6 +459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${metodo}${detallePagoHtml(venta)}</td>
         <td>${tipoVenta}</td>
         <td>${venta.clienteNombre ? escaparHtml(venta.clienteNombre) : '-'}</td>
+        <td>${nombresPorId.has(venta.usuarioId) ? escaparHtml(nombresPorId.get(venta.usuarioId)) : '-'}</td>
         <td>${formatearMoneda(venta.total || 0)}</td>
       `;
       cuerpoTabla.appendChild(fila);
@@ -672,6 +677,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <th>Método</th>
               <th>Tipo</th>
               <th>Cliente</th>
+              <th>Cajero</th>
               <th>Total</th>
             </tr>
           </thead>

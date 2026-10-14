@@ -797,6 +797,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // doble toque no registre la venta dos veces.
     botonConfirmarEl.disabled = true;
 
+    // Sin códigos de vendedor creados no se puede vender: sin ellos no se
+    // sabría quién hizo cada venta (Pin.pedir dejaría pasar con la sesión).
+    let hayCodigos = false;
+    try {
+      hayCodigos = await Auth.hayPinsConfigurados();
+    } catch (err) {
+      hayCodigos = false;
+    }
+    if (!hayCodigos) {
+      window.alert('No hay códigos de vendedor creados. Crea al menos uno en Usuarios para poder vender.');
+      botonConfirmarEl.disabled = false;
+      return;
+    }
+
     const vendedor = await Pin.pedir('Confirmar venta');
     if (!vendedor) {
       botonConfirmarEl.disabled = false;
