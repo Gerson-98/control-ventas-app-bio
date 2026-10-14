@@ -818,11 +818,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      const ventasExistentes = await DB.obtenerTodos(DB.STORES.VENTAS);
-      const numeroRecibo =
-        ventasExistentes.length === 0
-          ? 1
-          : Math.max(...ventasExistentes.map((v) => v.numeroRecibo || 0)) + 1;
+      // Siguiente recibo = mayor número guardado + 1, leído del índice
+      // (tiempo constante aunque haya decenas de miles de ventas).
+      const ultimoRecibo = await DB.ultimaClaveDeIndice(DB.STORES.VENTAS, 'numeroRecibo');
+      const numeroRecibo = (ultimoRecibo || 0) + 1;
 
       const costoEnvio = esDomicilio ? obtenerCostoEnvio() : 0;
       const total = calcularTotal();

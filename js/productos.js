@@ -315,6 +315,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     seleccionarCategoriaEnSelect(limpia);
   });
 
+  // Se muestran 50 productos por vez ("Mostrar más"); con cientos de
+  // productos con foto, pintarlos todos a la vez es innecesario y pesado.
+  const TAMANO_PAGINA = 50;
+  let limiteLista = TAMANO_PAGINA;
+  let busquedaAnterior = '';
+  let productosActuales = [];
+  const botonMas = document.createElement('button');
+  botonMas.type = 'button';
+  botonMas.className = 'boton boton-secundario oculto';
+  botonMas.style.cssText = 'display:block;margin:12px auto;';
+  listaEl.insertAdjacentElement('afterend', botonMas);
+  botonMas.addEventListener('click', () => {
+    limiteLista += TAMANO_PAGINA;
+    renderizarLista(productosActuales);
+  });
+
   function renderizarLista(productos) {
     // Revocar las miniaturas del render anterior antes de crear nuevas.
     urlsListaActivas.forEach((url) => URL.revokeObjectURL(url));
@@ -323,6 +339,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     listaEl.innerHTML = '';
 
     const hayBusqueda = buscadorEl.value.trim().length > 0;
+
+    // Una búsqueda nueva vuelve a las primeras 50.
+    if (buscadorEl.value !== busquedaAnterior) {
+      busquedaAnterior = buscadorEl.value;
+      limiteLista = TAMANO_PAGINA;
+    }
+    productosActuales = productos;
+    const restantes = productos.length - limiteLista;
+    botonMas.classList.toggle('oculto', restantes <= 0);
+    botonMas.textContent = `Mostrar más (${Math.max(restantes, 0)} restantes)`;
 
     if (productos.length === 0) {
       if (hayBusqueda) {
@@ -336,7 +362,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     estadoVacioEl.classList.add('oculto');
 
-    productos.forEach((producto) => {
+    productos.slice(0, limiteLista).forEach((producto) => {
       const tarjeta = document.createElement('div');
       tarjeta.className = 'tarjeta-producto';
 

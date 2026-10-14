@@ -218,6 +218,19 @@ const DB = {
     });
   },
 
+  // Mayor clave de un índice (o null si el store está vacío) sin cargar los
+  // registros: un cursor hacia atrás se detiene en la primera clave.
+  ultimaClaveDeIndice(storeName, indexName) {
+    return abrirDB().then((db) => {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const req = tx.objectStore(storeName).index(indexName).openKeyCursor(null, 'prev');
+        req.onsuccess = () => resolve(req.result ? req.result.key : null);
+        req.onerror = () => reject(req.error);
+      });
+    });
+  },
+
   contar(storeName) {
     return abrirDB().then((db) => {
       const tx = db.transaction(storeName, 'readonly');

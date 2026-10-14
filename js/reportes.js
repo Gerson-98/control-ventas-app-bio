@@ -473,23 +473,59 @@ document.addEventListener('DOMContentLoaded', async () => {
       </section>`;
   }
 
+  // La tabla muestra las ventas de 50 en 50 ("Mostrar más"): con miles de
+  // ventas en un mes o rango, pintarlas todas a la vez traba el iPad. Los
+  // totales de arriba se siguen calculando sobre todas las ventas.
+  const TAMANO_PAGINA_VENTAS = 50;
+  let limiteVentasTabla = TAMANO_PAGINA_VENTAS;
+  let claveFiltroAnterior = '';
+  const botonMasVentas = document.createElement('button');
+  botonMasVentas.type = 'button';
+  botonMasVentas.className = 'boton boton-secundario oculto';
+  botonMasVentas.style.cssText = 'display:block;margin:12px auto;';
+  tablaEnvoltorioEl.insertAdjacentElement('afterend', botonMasVentas);
+  botonMasVentas.addEventListener('click', () => {
+    limiteVentasTabla += TAMANO_PAGINA_VENTAS;
+    renderizarTabla();
+  });
+
   async function renderizarTabla() {
     await renderizarVentasPorVendedor();
     renderizarPagosElectronicos();
     const ventasPeriodo = obtenerVentasDelPeriodoParaTabla().slice().sort((a, b) => b.fecha - a.fecha);
+
+    // Al cambiar de período o filtro se vuelve a las primeras 50.
+    const claveFiltro = [
+      periodoActual,
+      inputFiltroDia.value,
+      inputFiltroSemana.value,
+      inputFiltroMes.value,
+      selectFiltroAnio.value,
+      inputRangoDesde.value,
+      inputRangoHasta.value,
+    ].join('|');
+    if (claveFiltro !== claveFiltroAnterior) {
+      claveFiltroAnterior = claveFiltro;
+      limiteVentasTabla = TAMANO_PAGINA_VENTAS;
+    }
 
     cuerpoTablaEl.innerHTML = '';
 
     if (ventasPeriodo.length === 0) {
       estadoVacioEl.classList.remove('oculto');
       tablaEnvoltorioEl.classList.add('oculto');
+      botonMasVentas.classList.add('oculto');
       return;
     }
 
     estadoVacioEl.classList.add('oculto');
     tablaEnvoltorioEl.classList.remove('oculto');
 
-    for (const venta of ventasPeriodo) {
+    const restantes = ventasPeriodo.length - limiteVentasTabla;
+    botonMasVentas.classList.toggle('oculto', restantes <= 0);
+    botonMasVentas.textContent = `Mostrar más (${Math.max(restantes, 0)} restantes)`;
+
+    for (const venta of ventasPeriodo.slice(0, limiteVentasTabla)) {
       const nombreCajero = await obtenerNombreCajero(venta.usuarioId);
       const fechaFormateada = new Date(venta.fecha).toLocaleString('es-GT', {
         day: '2-digit',

@@ -166,10 +166,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderizarLista(filtrarPorBusqueda(todosLosClientes, buscadorEl.value));
   }
 
+  // Se muestran 50 clientes por vez ("Mostrar más").
+  const TAMANO_PAGINA = 50;
+  let limiteLista = TAMANO_PAGINA;
+  let busquedaAnterior = '';
+  let clientesActuales = [];
+  const botonMas = document.createElement('button');
+  botonMas.type = 'button';
+  botonMas.className = 'boton boton-secundario oculto';
+  botonMas.style.cssText = 'display:block;margin:12px auto;';
+  listaEl.insertAdjacentElement('afterend', botonMas);
+  botonMas.addEventListener('click', () => {
+    limiteLista += TAMANO_PAGINA;
+    renderizarLista(clientesActuales);
+  });
+
   function renderizarLista(clientes) {
     listaEl.innerHTML = '';
 
     const hayBusqueda = buscadorEl.value.trim().length > 0;
+
+    // Una búsqueda nueva vuelve a los primeros 50.
+    if (buscadorEl.value !== busquedaAnterior) {
+      busquedaAnterior = buscadorEl.value;
+      limiteLista = TAMANO_PAGINA;
+    }
+    clientesActuales = clientes;
+    const restantes = clientes.length - limiteLista;
+    botonMas.classList.toggle('oculto', restantes <= 0);
+    botonMas.textContent = `Mostrar más (${Math.max(restantes, 0)} restantes)`;
 
     if (clientes.length === 0) {
       if (hayBusqueda) {
@@ -183,7 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     estadoVacioEl.classList.add('oculto');
 
-    clientes.forEach((cliente) => {
+    clientes.slice(0, limiteLista).forEach((cliente) => {
       const tarjeta = document.createElement('div');
       tarjeta.className = 'tarjeta-producto tarjeta-cliente';
 
