@@ -9,6 +9,8 @@ const ImpresoraBLE = (() => {
   const COLUMNAS = 48; // 80 mm, fuente A a 203 dpi
   const TAM_PAQUETE = 100;
   const PAUSA_MS = 25;
+  // Por pedido del cliente, cada venta se imprime dos veces seguidas.
+  const COPIAS = 2;
 
   let dispositivo = null;
   let caracteristica = null;
@@ -187,8 +189,16 @@ const ImpresoraBLE = (() => {
     }
   }
 
+  // El recibo termina con avance y corte, así que repetir los mismos bytes
+  // da N tickets separados en una sola conexión.
+  function repetir(recibo, copias) {
+    const todo = new Uint8Array(recibo.length * copias);
+    for (let i = 0; i < copias; i++) todo.set(recibo, i * recibo.length);
+    return todo;
+  }
+
   async function imprimir(venta) {
-    await enviar(construirRecibo(venta));
+    await enviar(repetir(construirRecibo(venta), COPIAS));
   }
 
   // Parte un texto en líneas de máximo `max` caracteres (para el recibo en imagen).
