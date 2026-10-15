@@ -2,7 +2,7 @@
 // térmicas BLE de 80 mm (SAT Q22, "Printer001": servicio 0xFF00, escritura 0xFF02).
 // Safari en iPad NO tiene Web Bluetooth; funciona en el navegador Bluefy.
 // Si navigator.bluetooth no existe, disponible() devuelve false y quien llama
-// debe usar el método anterior (thermer://).
+// debe avisar al usuario que abra la app en Bluefy.
 const ImpresoraBLE = (() => {
   const SERVICIO = '0000ff00-0000-1000-8000-00805f9b34fb';
   const CARACTERISTICA = '0000ff02-0000-1000-8000-00805f9b34fb';
@@ -58,7 +58,7 @@ const ImpresoraBLE = (() => {
   const ESC = 0x1b;
   const GS = 0x1d;
 
-  // La impresora no trae tildes/ñ de forma fiable: se quitan, igual que en thermer.
+  // La impresora no trae tildes/ñ de forma fiable: se quitan.
   function limpiar(texto) {
     return String(texto ?? '')
       .normalize('NFD')

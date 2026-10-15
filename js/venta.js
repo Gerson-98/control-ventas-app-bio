@@ -1172,101 +1172,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     return recortado + '…';
   }
 
-  // ---------- Impresión directa vía app "Bluetooth Print" (esquema thermer://) ----------
-  // La app se abre sola y recibe el recibo como texto nativo de impresora
-  // (no como imagen), incrustado directo en la URL — sin servidor, 100%
-  // offline. Esquema documentado en github.com/tussharmate/ios-thermer-custom-schema.
-  // IMPORTANTE: la app recibe este contenido dentro de una URL
-  // (thermer://?data=...), y ese tipo de enlaces entre apps de iOS tiene un
-  // límite de tamaño bastante corto. Un recibo "normal" (una entrada de
-  // texto por línea) fácilmente pasa ese límite y la URL llega truncada:
-  // la impresora imprime solo hasta donde alcanzó y corta ahí mismo,
-  // pareciendo un corte prematuro pero en realidad es una URL incompleta.
-  // Por eso aquí se agrupan varias líneas dentro de una sola "entrada" de
-  // texto usando saltos de línea (<br />), que la app también soporta:
-  // mismo contenido, muchísimo menos texto de formato JSON de por medio.
-  const SEPARADOR_RECIBO = '........................';
-
-  function construirEntradasThermer(venta) {
-    const entradas = [];
-    const texto = (content, align = 0, bold = 0) => {
-      const entrada = { type: 0, content };
-      if (bold) entrada.bold = 1;
-      if (align) entrada.align = align;
-      entradas.push(entrada);
-    };
-
-    texto('Fruteria Los Bionicos', 1, 1);
-    const fechaTexto = new Date(venta.fecha).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
-    const lineaDireccion = venta.direccionNegocio ? `${venta.direccionNegocio}<br />` : '';
-    const lineaTelefono = (venta.telefonoNegocio ? `Tel: ${venta.telefonoNegocio}<br />` : '');
-    texto(`${lineaDireccion}${lineaTelefono}${fechaTexto}<br />Recibo #${venta.numeroRecibo}<br />Atendio: ${venta.cajero}`, 1);
-    texto(SEPARADOR_RECIBO);
-
-    const lineasProductos = venta.lineas.map((l) => {
-      const extra = l.extra || 0;
-      const subtotal = (l.precio + extra) * l.cantidad;
-      let linea = `${l.cantidad} x ${l.nombre} .... ${formatearMoneda(subtotal)}`;
-      if (extra > 0) linea += `<br />  (${formatearMoneda(l.precio)} + ${formatearMoneda(extra)} extra)`;
-      if (l.nota) linea += `<br />  Nota: ${l.nota}`;
-      return linea;
-    });
-    if (venta.esDomicilio && venta.costoEnvio > 0) {
-      lineasProductos.push(`Envio a domicilio .... ${formatearMoneda(venta.costoEnvio)}`);
-    }
-    texto(lineasProductos.join('<br />'));
-    texto(SEPARADOR_RECIBO);
-
-    texto(`Total: ${formatearMoneda(venta.total)}`, 0, 1);
-    texto(`Metodo de pago: ${etiquetaMetodoPago(venta.metodoPago)}`);
-
-    if (venta.esPedidosYa) {
-      texto(SEPARADOR_RECIBO);
-      texto(`Pedidos Ya<br />Cliente: ${venta.clienteNombre || ''}`);
-    }
-
-    if (venta.esDomicilio) {
-      texto(SEPARADOR_RECIBO);
-      const lineasDomicilio = ['Entrega a domicilio'];
-      if (venta.clienteNombre) lineasDomicilio.push(venta.clienteNombre);
-      if (venta.clienteTelefono) lineasDomicilio.push(venta.clienteTelefono);
-      if (venta.clienteDireccion) lineasDomicilio.push(venta.clienteDireccion);
-      if (venta.telefonoAlterno) lineasDomicilio.push(`Tel. alterno: ${venta.telefonoAlterno}`);
-      if (venta.notasEntrega) lineasDomicilio.push(venta.notasEntrega);
-      texto(lineasDomicilio.join('<br />'));
-    }
-
-    texto(SEPARADOR_RECIBO);
-    // Sin alinear al centro a propósito: la app agrupa todo el texto
-    // centrado junto al encabezado, imprimiéndolo al principio del ticket
-    // en vez de al final si se usa align=1 aquí.
-    texto('Gracias por su compra!<br /> <br /> ');
-
-    return entradas;
-  }
-
-  function imprimirConThermer(venta) {
-    const entradas = construirEntradasThermer(venta);
-    const objetoConClaves = {};
-    // La app ordena las claves como TEXTO, no como número: con 10 o más
-    // líneas, la clave "10" queda alfabéticamente entre "1" y "2",
-    // imprimiendo esa línea fuera de orden. Se rellenan con ceros a la
-    // izquierda (ej. "00", "01" ... "10") para que el orden alfabético
-    // coincida siempre con el orden real de las líneas del recibo.
-    const digitos = String(entradas.length - 1).length;
-    entradas.forEach((entrada, indice) => {
-      const clave = String(indice).padStart(digitos, '0');
-      objetoConClaves[clave] = entrada;
-    });
-    const datosCodificados = encodeURIComponent(JSON.stringify(objetoConClaves));
-    window.location.href = `thermer://?data=${datosCodificados}`;
-  }
-
-  // En Bluefy (Web Bluetooth) imprime directo; en Safari cae al método thermer://.
+  // Imprime directo por Bluetooth (Web Bluetooth): solo funciona en Bluefy.
   botonImprimirDirecto.addEventListener('click', async () => {
     if (!ultimaVentaParaRecibo) return;
     if (!ImpresoraBLE.disponible()) {
-      imprimirConThermer(ultimaVentaParaRecibo);
+      window.alert('Este navegador no permite imprimir. Abre la app en Bluefy para imprimir el recibo.');
       return;
     }
     try {

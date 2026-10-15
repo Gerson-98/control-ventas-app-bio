@@ -1,4 +1,4 @@
-const CACHE_NAME = 'los-bionicos-v41';
+const CACHE_NAME = 'los-bionicos-v42';
 
 const ARCHIVOS_ESTATICOS = [
   './',
